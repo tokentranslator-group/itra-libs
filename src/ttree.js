@@ -42,6 +42,13 @@ function Tree(options){
      
      Input:
      
+     -- ``storage`` - object created with document.createElement(`div`)
+     or by react ref. If given it will be forfilled with other container ids,
+     otherwise the the other container ids divs has to be present alredy.
+     (see self.mk_storages). During self.rm_tree only contents of storage will be removed.
+     (so it will not be removed). During self.reload_container container also will not
+     be removed but cleared only.
+ 
      -- ``activator(event, data)`` - function, that define
      what hapend if user click right button.
 
@@ -64,6 +71,7 @@ function Tree(options){
     var self = this;
     // self.net = net;
 
+    
     self.container_div_id = options["container_div_id"];
     self.tree_div_id = options["tree_div_id"];
     self.menu_div_id = options["menu_div_id"];
@@ -73,6 +81,11 @@ function Tree(options){
     if(self.dbg)
 	console.log('options["menu_shift"]=', options["menu_shift"]);
     self.menu_shift = options["menu_shift"]?options["menu_shift"]:[0,0];
+
+    // create necessary storage divs
+    self.storage = options["storage"]?options["storage"]:false;
+    if (self.storage)
+	self.mk_storages();
 
     // FOR activate:
     self.activator = options["activator"];
@@ -109,25 +122,37 @@ function Tree(options){
 
 
 // FOR reload:
-Tree.prototype.reload_container = function(){
-	       
-    /*
-     Reload tree container before rewrite tree.
-
-     $("#main_tree").empty(); not work
-     TODO:
-     use reload winth init_data (as well for menu)
-     // var tree = $(self.tree_div_id).fancytree('getTree');
-     // tree.reload(init_data);
-     // tree.render(true);
-     */
+Tree.prototype.update_tree = function(data){
     var self = this;
-	       
-    $(self.tree_div_id).remove();
-    $(self.menu_div_id).remove();
-    $(self.input_div_id).remove();
-    $(self.search_div_id).remove();
+    self.rm_tree();
+    self.mk_tree(data);
+}
 
+
+Tree.prototype.mk_storages = function(){
+    /*Only if storage have been given during initialization of Tree*/
+
+    var self = this;
+    self.mk_container();
+    self.fill_container();
+}
+
+Tree.prototype.mk_container = function(){
+    /*I.e. add container to storage if last exist*/
+    var self = this;
+    if (self.storage){
+	let container = document.createElement('div');
+	let original_container_div_id = self.container_div_id.slice(1);
+	container.id = original_container_div_id;
+	self.storage.appendChild(container);    
+	console.log("mk_container: self.storage:", self.storage);
+    }
+}
+
+
+Tree.prototype.fill_container = function(){
+    var self = this;
+    
     var original_tree_div_id = self.tree_div_id.slice(1);
     var original_menu_div_id = self.menu_div_id.slice(1);
     var original_input_div_id = self.input_div_id.slice(1);
@@ -141,14 +166,62 @@ Tree.prototype.reload_container = function(){
 	 + original_tree_div_id
 	 + '" class="tree_positioned" style="top: 100px;"></div>'));
 
-    $(self.container_div_id).parent().append(
+    $(self.container_div_id).append(
 	('<input id="' + original_search_div_id 
 	 + '" name="search" placeholder="Filter..." autocomplete="off"'
 	 + 'style="position: inherit; left: 13%; top: 97%; width: 70%;"><br><br>'));
+
     $(self.container_div_id).append(
 	('<div id="' + original_menu_div_id + '"></div>'));
     $(self.container_div_id).append(
 	('<div id="' + original_input_div_id + '"></div>'));
+
+}
+
+
+Tree.prototype.free_container = function(){
+    $(self.tree_div_id).remove();
+    $(self.menu_div_id).remove();
+    $(self.input_div_id).remove();
+    $(self.search_div_id).remove();
+}
+
+Tree.prototype.mk_tree = function(init_data){
+    /*Only if storage have been given during initialization of Tree*/
+    var self = this;
+    self.mk_storages();
+    self.create_tree(init_data);
+}
+
+Tree.prototype.rm_tree = function(){
+    /*Only in that case the container will be removed*/
+    var self = this;
+    self.free_container();
+
+    // removing the container also:
+    $(self.container_div_id).remove();
+
+}
+
+
+
+Tree.prototype.reload_container = function(){
+	       
+    /*
+     Reload tree container before rewrite tree.
+     The container itself will not be removed!
+
+     $("#main_tree").empty(); not work
+     TODO:
+     use reload winth init_data (as well for menu)
+     // var tree = $(self.tree_div_id).fancytree('getTree');
+     // tree.reload(init_data);
+     // tree.render(true);
+     */
+    var self = this;
+	       
+    self.free_container();
+    self.fill_container();
 };
 // END FOR
 
