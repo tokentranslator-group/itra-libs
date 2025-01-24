@@ -1,7 +1,7 @@
 console.log("log tinput.js");
 import $ from 'jquery';
 import * as ui from 'jquery-ui';
-import * as tooltip from './tooltip.js';
+import * as tooltip from '../tooltip/tooltip.js';
 
 /*
 define(['jquery', 'jquery-ui-custom/jquery-ui', 'tooltip'],

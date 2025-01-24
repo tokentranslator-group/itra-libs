@@ -23,8 +23,8 @@ import 'jquery.fancytree/dist/skin-xp/ui.fancytree.css';  // CSS or LESS
 
 // import 'jquery.fancytree/dist/modules/jquery.fancytree.filter';
 
-import * as tmenu from './tmenu.js';
-import * as tinput from './tinput.js';
+import * as tmenu from '../menu/tmenu.js';
+import * as tinput from '../input/tinput.js';
 
 /*
 define(['require', 'jquery', 'jquery-ui-custom/jquery-ui',

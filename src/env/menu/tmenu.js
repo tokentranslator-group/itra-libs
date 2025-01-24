@@ -1,8 +1,8 @@
 console.log("log tmenu.js");
 import $ from 'jquery';
 import * as ui from 'jquery-ui';
-import * as tooltip from './tooltip.js';
-import * as tinput from './tinput.js';
+import * as tooltip from '../tooltip/tooltip.js';
+import * as tinput from '../input/tinput.js';
 import 'jquery-ui/ui/widgets/menu';
 
 /*
