@@ -12,27 +12,30 @@ class HostFsm{
     /*The HostFsm or Parent of TreeFsm. They both sharing same
      `stack` i.e. same root through the eHandler events names
      i.e. through the observer pattern*/
-    constructor(){
-	events.on("Host.add.enter", ({event_type, args, trace})=>{
+    constructor(idx){
+	var self = this;
+	this.idx = idx;
+	
+	events.on(self.idx+".add.enter", ({event_type, args, trace})=>{
 	    let node_name = args.node_name;
 
 	    // simulating the server:
 	    var node = {"title": node_name, "folder": false};
 
-	    console.log("Host.add.enter: adding data to server...");
+	    console.log(self.idx+".add.enter: adding data to server...");
 	    // data having been updated, call to everyone:
-	    events.emit("Host.add.exit", {
+	    events.emit(self.idx+".add.exit", {
 		fargs: {node:node}});
 	});
 
 	// TODO: mk_action({enter:()=>..., exit: ()=>...}) 
-	events.on("Host.join.enter", ({event_type, args, trace})=>{
+	events.on(self.idx+".join.enter", ({event_type, args, trace})=>{
 	    let parent = args.parent;
 	    let children = args.children;
 
-	    console.log("Host.join.enter: joining on server...");
+	    console.log(self.idx+".join.enter: joining on server...");
 	    // data having been updated, call to everyone:
-	    events.emit("Host.join.exit", {
+	    events.emit(self.idx+".join.exit", {
 		fargs: {tree_data:{}}});
 	});
 
@@ -41,23 +44,26 @@ class HostFsm{
 
 
 class TreeFsm{
-    constructor(){
+    constructor(idx, parent_idx){
+
 	var self = this;
+	self.idx = idx;
+	self.parent_idx = parent_idx;
 
 	// update tree:
-	events.on("TreeFsm.mk_tree", ({event_type, args, trace})=>{
+	events.on(self.idx+".mk_tree", ({event_type, args, trace})=>{
 	    self.tree = args.tree;
 	});
 
-	// specific methods from parent fsm:
-	events.on("Host.join.exit", ({event_type, args, trace})=>{
+	// FOR specific methods from parent fsm:
+	events.on(self.parent_idx+".join.exit", ({event_type, args, trace})=>{
 	    let tree_data = args.tree_data;
 	    console.log("updating tree after Host.join.exit...");
 	    // update state then
 	    // self.switch_to(idle, entry)
 	});
 
-	events.on("Host.add.exit", ({event_type, args, trace})=>{
+	events.on(self.parent_idx+".add.exit", ({event_type, args, trace})=>{
 	    let node = args.node;
 	    self.tree.add_node(node);
 	    // update state then
@@ -65,14 +71,14 @@ class TreeFsm{
 	});
 
 	// specific methods from children:
-	events.on("TreeFsm.join", ({event_type, args, trace})=>{
+	events.on(self.idx+".join", ({event_type, args, trace})=>{
 	    self.join();
 	});
 	
-	events.on("TreeFsm.mk", ({event_type, args, trace})=>{
+	events.on(self.idx+".mk", ({event_type, args, trace})=>{
 	    self.mk();
 	});
-	
+	// END FOR
 	
 
 	this._transitions = {};	
@@ -88,7 +94,7 @@ class TreeFsm{
 	const selected_node_names = selected_nodes.map(node=>node["title"]);
 	console.log("node_name:", selected_node_names);
 
-	events.emit("Host.join.enter", {
+	events.emit(self.parent_idx+".join.enter", {
 	    fargs:{
 		parent: active_node,
 		children: selected_node_names
@@ -103,19 +109,20 @@ class TreeFsm{
 	// var x = self.tree.menu.offset[0];
 	// var y = self.tree.menu.offset[1];
 	
+	console.log("TreeFsm:dbg:self.tree", self.tree);
 	self.tree.menu.input.create_input(x, y, (node_name)=>{
-	    events.emit("Host.add.enter", ({fargs:{node_name: node_name}}));
+	    events.emit(self.parent_idx+".add.enter", ({fargs:{node_name: node_name}}));
 	});
 
     }
 }
 
 class IO{
-    constructor(){
+    constructor(tree_fsm_idx){
 	document.addEventListener('keyup', (event)=>{
 	    console.log("event.key:", event.key);
 	    if(event.key == "a")
-		events.emit("TreeFsm.mk", {});
+		events.emit(tree_fsm_idx+".mk", {});
 	});
 
 	// 'onclick'
@@ -128,28 +135,36 @@ class IO{
     }
 }
 
-function main(){
 
-    const host_fsm = new HostFsm();
-    const tree_fsm = new TreeFsm();
-    const io = new IO();    
+function  mk_tree({storage, container_id, tree_id, menu_id, input_id, tree_fsm_idx}){
+    /*
+     - ``storage_id`` -- where the tree object will be put in.
+     Will not be created here, should exist alredy.
+     Others ids will be created and should not exist.
 
-    $("#root").html(` <div id="mc_0" class="mc">
-      <div id="main_tree" class="tree_positioned" style="position: inherit; top: 100px;"></div>
-      <div id="tree_menu" style="z-index: 0;"></div>
-      <div id="tree_input"></div>
-    </div>
+     - ``tree_fsm_idx`` -- the name of fsm to call upon (like TreeFsm1 for instance)
+     */
+    
+    var container = document.createElement('div');
+    container.id = container_id;
+
+    storage.appendChild(container);
+    
+    $("#"+container_id).html(
+	`<div id="`+tree_id+`" class="tree_positioned" style="position: inherit; top: 100px;"></div>
+      <div id="`+menu_id+`" style="z-index: 0;"></div>
+      <div id="`+input_id+`"></div>
    `);
 
 
     const tree = new Tree({
 	
 	
-	container_div_id: "#mc_0",
+	container_div_id: "#"+container_id,
 
-	tree_div_id: "#main_tree",
-	menu_div_id: "#tree_menu",
-	input_div_id: "#tree_input",
+	tree_div_id: "#"+tree_id,
+	menu_div_id: "#"+menu_id,
+	input_div_id: "#"+input_id,
 	
 	// for avoiding canvas influence:
 	menu_shift: 0, // parseInt(menu_shift_controls_top, 10),
@@ -178,10 +193,10 @@ function main(){
 
 	// keys here must be equal to ``menu_items``:
 	menu_callbacks: {
-	    "join": ()=>events.emit("TreeFsm.join", {}),
+	    "join": ()=>events.emit(tree_fsm_idx+".join", {}),
 	    "mk": ()=>{
 		console.log("mk...");
-		events.emit("TreeFsm.mk", {});
+		events.emit(tree_fsm_idx+".mk", {});
 	    },
 	    "load": ()=>{
 		console.log("loading...");
@@ -193,7 +208,21 @@ function main(){
 	// END FOR
     });
 
-    events.emit("TreeFsm.mk_tree", {fargs: {tree: tree}});
+    return tree;
+}
+
+
+function main(){
+    const host_fsm = new HostFsm("Host1");
+    const tree_fsm = new TreeFsm("TreeFsm1", "Host1");
+    const io = new IO("TreeFsm1");    
+    
+
+    const root = document.getElementById('root');
+    
+    const tree = mk_tree({storage: root, container_id: "mc_0", tree_id: "left_tree_id", menu_id: "menu_id", input_id: "input_id", tree_fsm_idx:"TreeFsm1"});
+
+    events.emit("TreeFsm1.mk_tree", {fargs: {tree: tree}});
     // const root = ReactDOM.createRoot(document.getElementById('root'));
     // root.render(<MyAppCy />);
 
@@ -201,4 +230,4 @@ function main(){
 }
 
 
-export {main}
+export {main, mk_tree, HostFsm, TreeFsm, IO}
