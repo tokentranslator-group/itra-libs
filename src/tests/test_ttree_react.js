@@ -4,7 +4,9 @@ import ReactDOM from 'react-dom';
 
 
 import {TreeComponent} from '../env/tree/ttree_react.js';
-import {mk_tree} from './test_ttree.js';
+
+// helper:
+import {mk_tree} from '../env/tree/ttree_helpers.js';
 
 
 

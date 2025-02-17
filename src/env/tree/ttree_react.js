@@ -15,11 +15,14 @@ function TreeComponent({tree_wrapper_id,  tree_data, mk_tree}){
     const storage = useRef(tree_wrapper_id);
     const [tree_state, set_tree_state] = useState(tree_data);
 
+    // on tree_data update
     useEffect(()=>{
 	events.emit("Host1.update.exit", {
 	    fargs: {tree_data: tree_data}});
     }, [tree_data]);
 
+
+    // on init/exit
     useEffect(()=>{
 
 	const host_fsm = new HostFsm("Host1");

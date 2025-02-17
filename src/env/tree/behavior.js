@@ -59,6 +59,12 @@ class HostFsm{
 
 class TreeFsm{
     /*
+     This looks like signle State rather then fsm.
+     State.enter -> register on parent.on_exit methods
+                 -> register on self.on_action methods
+     State.exit -> unregister
+     State.apply(action)
+
      switch_to(adding)
         self.state_adding.on_exit() -> unregister adding.exit, register adding.enter
         self.state_adding.on_enter() -> register adding.exit, unregister adding.enter
@@ -103,7 +109,7 @@ class TreeFsm{
 	    // self.switch_to(adding->idle, entry)
 	});
 
-	// specific methods from children:
+	// FOR specific methods from children:
 
 	// state == idle
 	events.on(self.idx+".join", ({event_type, args, trace})=>{
@@ -169,6 +175,7 @@ class TreeFsm{
     }
 }
 
+/* This Input is responsible for keyboard shortcuts */
 class IO{
     constructor(tree_fsm_idx){
 	document.addEventListener('keyup', (event)=>{
