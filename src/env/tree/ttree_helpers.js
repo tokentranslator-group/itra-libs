@@ -30,12 +30,13 @@ function  mk_tree({storage, options}){
     const tree = new Tree({
 	
 	storage: storage,
-	container_div_id: "#"+container_id,
+	container_div_id: container_id,
 
-	tree_div_id: "#"+tree_id,
-	menu_div_id: "#"+menu_id,
-	input_div_id: "#"+input_id,
-	search_div_id: "#"+search_id,
+	tree_div_id: tree_id,
+	menu_div_id: menu_id,
+	input_div_id: input_id,
+	search_div_id: search_id,
+
 	// for avoiding canvas influence:
 	menu_shift: 0, // parseInt(menu_shift_controls_top, 10),
 
@@ -49,6 +50,8 @@ function  mk_tree({storage, options}){
 	menu_tooltips: actions.menu.tooltips,
 	menu_callbacks: actions.menu.callbacks
     });
+
+    //tree.mk_tree();
     events.emit("TreeFsm1.mk_tree", {fargs: {tree: tree}});
 
     return tree;

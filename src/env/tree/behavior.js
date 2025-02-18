@@ -213,17 +213,21 @@ class IO{
     // TODO: instead of tree_fsm_idx use ActionsQueue
     // so it will not be restricted by Tree only 
     constructor(tree_fsm_idx){
+	var self = this;
+	this.idx = tree_fsm_idx;
 	
+	this.keys_handler = this.keys_handler.bind(this);
 	document.addEventListener('keyup', this.keys_handler);
 
 	// 'onclick'
+	this.click_handler = this.click_handler.bind(this);
 	window.addEventListener('onclick', this.click_handler);
 	
     }
 
     unregister(){
 	document.removeEventListener('keyup', this.keys_handler);
-	document.removeEventListener('keyup', this.click_handler);
+	document.removeEventListener('onclick', this.click_handler);
     }
 
     click_handler(event){
@@ -231,12 +235,14 @@ class IO{
     }
 
     keys_handler(event){
-	    console.log("event.key:", event.key);
-	    if(event.key == "a")
-		events.emit(tree_fsm_idx+".mk", {});
+	var self = this;
+	console.log("event.key:", event.key);
+	console.log("event.key:", self);
+	if(event.key == "a")
+	    events.emit(self.idx+".mk", {});
 
-	    if(event.key == "u")
-		events.emit(tree_fsm_idx+".update", {});
+	if(event.key == "u")
+	    events.emit(self.idx+".update", {});
 
     }	
 }

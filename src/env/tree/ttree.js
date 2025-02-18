@@ -8,7 +8,7 @@ import 'jquery.fancytree';
 import 'jquery.fancytree/dist/modules/jquery.fancytree.filter';
 import 'jquery.fancytree/dist/skin-xp/ui.fancytree.css';  // CSS or LESS
 
-import {mk_container} from '../basic.js';
+
 // import './fancytree/modules/jquery.fancytree.js';
 
 // import './fancytree/skin-xp/ui.fancytree.css';  // CSS or LESS
@@ -24,30 +24,26 @@ import {mk_container} from '../basic.js';
 
 // import 'jquery.fancytree/dist/modules/jquery.fancytree.filter';
 
+import {TreeStorage} from './storage.js';
 import * as tmenu from '../menu/tmenu.js';
 import * as tinput from '../input/tinput.js';
 
-/*
-define(['require', 'jquery', 'jquery-ui-custom/jquery-ui',
-	'fancytree/modules/jquery.fancytree',
-	'fancytree/modules/jquery.fancytree.filter','tmenu', 'tinput'],
-       function(require, $, ui, fancytree, fancytree_filter, tmenu){
 
-	   // jquery_ui = require('jquery-ui-custom/jquery-ui');
-	   // fancytree = require('fancytree/modules/jquery.fancytree');
-	   // fancytree_filter = require('fancytree/modules/jquery.fancytree.filter');
-*/
 function Tree(options){
 
     /*Create tree with context menu in it.
      
      Input:
      
-     -- ``storage`` - object created with document.createElement(`div`)
-     or by react ref. If given it will be forfilled with other container ids,
-     otherwise the the other container ids divs has to be present alredy.
-     (see self.mk_storages). During self.rm_tree only contents of storage will be removed.
-     (so it will not be removed). During self.reload_container container also will not
+     -- ``options.storage`` - object created with document.createElement(`div`)
+     or by react ref. Now it is mandatory.
+
+     # this is no longer correct:
+     // If given it will be forfilled with other container ids,
+     // otherwise the other container ids divs has to be present alredy.
+
+     (see self.storage.mk_storages). During self.rm_tree only contents of storage will be removed.
+     (so the storage itself will not be removed). During self.reload_container container also will not
      be removed but cleared only.
  
      -- ``activator(event, data)`` - function, that define
@@ -57,6 +53,7 @@ function Tree(options){
 
      -- ``tree_data, url`` - if tree_data is not specified,
      url will be used for ajax to get it.
+
      Example: 
      	tree_data: {
 	    title: "available", key: "1", folder: true,
@@ -72,22 +69,14 @@ function Tree(options){
     var self = this;
     // self.net = net;
 
+    self.storage = new TreeStorage(options);
     
-    self.container_div_id = options["container_div_id"];
-    self.tree_div_id = options["tree_div_id"];
-    self.menu_div_id = options["menu_div_id"];
-    self.input_div_id = options["input_div_id"];
-    self.search_div_id = options["search_div_id"];  // for filter
     self.dbg = options["dbg"] || false;
     if(self.dbg)
 	console.log('options["menu_shift"]=', options["menu_shift"]);
+
     self.menu_shift = options["menu_shift"]?options["menu_shift"]:[0,0];
 
-    // TODO: generalize to BaseComponent object
-    // create necessary storage divs
-    self.storage = options["storage"]?options["storage"]:false;
-    if (self.storage)
-	self.mk_storages();
 
     // FOR activate:
     self.activator = options["activator"];
@@ -100,10 +89,14 @@ function Tree(options){
     // dict, whose keys must be equal to ``self.manu_items``:
     self.menu_callbacks = options["menu_callbacks"];
 
-    self.menu = new tmenu.Menu(self.menu_div_id, self.input_div_id,
-			       self.menu_items,
-			       self.menu_tooltips,
-			       self.menu_callbacks);    
+    self.menu = new tmenu.Menu(
+	// TODO: remove "#" for menu:
+	"#"+ self.storage.menu_div_id,
+	"#"+ self.storage.input_div_id,
+	
+	self.menu_items,
+	self.menu_tooltips,
+	self.menu_callbacks);    
     // END FOR
 
     
@@ -111,7 +104,8 @@ function Tree(options){
     if ("tree_data" in options){
 	
 	var init_data = options["tree_data"];
-	self.create_tree(init_data);
+	self.mk_tree(init_data);
+	// self.create_tree(init_data);
     }
     else
 	if ("url" in options){
@@ -120,6 +114,10 @@ function Tree(options){
 	    // self.init_data = server_respounse;
 	}		   
     // END FOR
+}
+
+Tree.prototype.$ = function(div_id){
+    return this.storage.$(div_id);
 }
 
 
@@ -131,77 +129,23 @@ Tree.prototype.update_tree = function(data){
 }
 
 
-Tree.prototype.mk_storages = function(){
-    /*Only if storage have been given during initialization of Tree*/
-
-    var self = this;
-    self.mk_container();
-    self.fill_container();
-}
-
-Tree.prototype.mk_container = function(){
-    /*I.e. add container to storage if last exist*/
-    var self = this;
-    if (self.storage)
-	mk_container(self.storage, self.container_div_id.slice(1));
-}
-
-
-Tree.prototype.fill_container = function(){
-    /*Fill existing container*/
-    var self = this;
-    
-    var original_tree_div_id = self.tree_div_id.slice(1);
-    var original_menu_div_id = self.menu_div_id.slice(1);
-    var original_input_div_id = self.input_div_id.slice(1);
-    var original_search_div_id = self.search_div_id.slice(1);
-
-    if(self.dbg)
-	console.log("original_search_div_id:", original_search_div_id);
-
-    $(self.container_div_id).append(
-	('<div id="'
-	 + original_tree_div_id
-	 + '" class="tree_positioned" style="top: 100px;"></div>'));
-
-    $(self.container_div_id).append(
-	('<input id="' + original_search_div_id 
-	 + '" name="search" placeholder="Filter..." autocomplete="off"'
-	 + 'style="position: inherit; left: 13%; top: 97%; width: 70%;"><br><br>'));
-
-    $(self.container_div_id).append(
-	('<div id="' + original_menu_div_id + '"></div>'));
-    $(self.container_div_id).append(
-	('<div id="' + original_input_div_id + '"></div>'));
-
-}
-
-
-Tree.prototype.free_container = function(){
-    /*Remove container-s contant*/
-    $(self.tree_div_id).remove();
-    $(self.menu_div_id).remove();
-    $(self.input_div_id).remove();
-    $(self.search_div_id).remove();
-}
-
 Tree.prototype.mk_tree = function(init_data){
     /*Only if a storage have been given during initialization of the Tree*/
     var self = this;
-    self.mk_storages();
+    self.storage.mk_storages();
     self.create_tree(init_data);
 }
+
 
 Tree.prototype.rm_tree = function(){
     /*Only in that case the container will be removed*/
     var self = this;
-    self.free_container();
+    self.storage.free_container();
 
     // removing the container also:
-    $(self.container_div_id).remove();
+    self.storage.rm_container();
 
 }
-
 
 
 Tree.prototype.reload_container = function(){
@@ -219,8 +163,8 @@ Tree.prototype.reload_container = function(){
      */
     var self = this;
 	       
-    self.free_container();
-    self.fill_container();
+    self.storage.free_container();
+    self.storage.fill_container();
 };
 // END FOR
 
@@ -390,7 +334,7 @@ Tree.prototype.convert_tree_to_dict = function(){
     var self = this;
     
     // Convert the whole tree into an dictionary
-    var tree = $(self.tree_div_id).fancytree("getTree");
+    var tree = self.$(self.storage.tree_div_id).fancytree("getTree");
     var d = tree.toDict(true);
     return(JSON.stringify(d));
 };
@@ -459,9 +403,9 @@ Tree.prototype.add_node = function(node){
     
     var self = this;
     
-    var parent_node = $(self.tree_div_id).fancytree("getActiveNode");
+    var parent_node = self.$(self.storage.tree_div_id).fancytree("getActiveNode");
     if(!parent_node)
-	parent_node = $(self.tree_div_id).fancytree("getRootNode");
+	parent_node = self.$(self.storage.tree_div_id).fancytree("getRootNode");
     if(self.dbg)
 	console.log("parent_node = ", parent_node);
 
@@ -516,7 +460,7 @@ Tree.prototype.remove_selected_node = function(check_empty){
      if (!self.active_node)
      return;
      */
-    var node = $(self.tree_div_id).fancytree("getActiveNode");
+    var node = self.$(self.storage.tree_div_id).fancytree("getActiveNode");
     if(!node)
 	return;
     if(check_empty)
@@ -575,7 +519,7 @@ Tree.prototype.get_parent_node = function(node){
 
 Tree.prototype.get_selected_node = function(){
     var self = this;
-    var node = $(self.tree_div_id).fancytree("getActiveNode");
+    var node = self.$(self.storage.tree_div_id).fancytree("getActiveNode");
     if(!node)
 	return;
     return(node);
@@ -595,7 +539,7 @@ Tree.prototype.get_selected_nodes = function(){
 
 Tree.prototype.get_root_node = function(){
     var self = this;
-    return($(self.tree_div_id).fancytree("getRootNode"));
+    return(self.$(self.storage.tree_div_id).fancytree("getRootNode"));
 };
 // REF: http://wwwendt.de/tech/fancytree/demo/#sample-api.html
 // END FOR
@@ -607,12 +551,12 @@ Tree.prototype.create_tree = function(init_data){
     
     var self = this;
 
-    var original_tree_div_id = self.tree_div_id.slice(1);
+    // var original_tree_div_id = self.tree_div_id.slice(1);
     if(self.dbg)
-	console.log("self.tree_div_id = ", self.tree_div_id);
-	       
+	console.log("self.storage.tree_div_id = ", self.storage.tree_div_id);
+    console.log("self.storage.tree_div_id = ", self.storage.tree_div_id);
     // prevent default:
-    document.getElementById(original_tree_div_id)
+    document.getElementById(self.storage.tree_div_id)
 	.addEventListener("contextmenu", function(event){
 	    event.preventDefault();
 	    if(self.dbg)
@@ -621,13 +565,13 @@ Tree.prototype.create_tree = function(init_data){
 	}, false);
 
     // remove menu on left click:
-    document.getElementById(original_tree_div_id)
+    document.getElementById(self.storage.tree_div_id)
 	.addEventListener("click", function(event){
 	    self.menu.update_remove();
 	    
 	}, false);
 
-    $(self.tree_div_id).fancytree({
+    self.$(self.storage.tree_div_id).fancytree({
 	/*
 	 click: function(event, data){
 	 console.log("event click = ", event);
@@ -691,7 +635,7 @@ Tree.prototype.create_tree = function(init_data){
 
 	if(self.dbg)
 	    console.log("event contextmenu = ", event);
-	var tree = $(self.tree_div_id).fancytree("getTree");
+	var tree = self.$(self.storage.tree_div_id).fancytree("getTree");
 	var d = tree.toDict(true);
 	if(self.dbg)
 	    console.log(JSON.stringify(d));
@@ -705,13 +649,13 @@ Tree.prototype.create_tree = function(init_data){
 	
     });
     
-    $(self.search_div_id).on("keyup", function(e){
+    self.$(self.storage.search_div_id).on("keyup", function(e){
 	/*
 	 REF: http://wwwendt.de/tech/fancytree/demo/#sample-ext-filter.html
 	 REF: https://github.com/mar10/fancytree/wiki/ExtFilter
 	 */
 		   
-	var tree = $(self.tree_div_id).fancytree("getTree");
+	var tree = self.$(self.storage.tree_div_id).fancytree("getTree");
 	// tree.filterBranches : tree.filterNodes,
 	var match = $(this).val();
 	if(e && e.which === $.ui.keyCode.ESCAPE || $.trim(match) === ""){
