@@ -8,6 +8,7 @@ import 'jquery.fancytree';
 import 'jquery.fancytree/dist/modules/jquery.fancytree.filter';
 import 'jquery.fancytree/dist/skin-xp/ui.fancytree.css';  // CSS or LESS
 
+import {mk_container} from '../basic.js';
 // import './fancytree/modules/jquery.fancytree.js';
 
 // import './fancytree/skin-xp/ui.fancytree.css';  // CSS or LESS
@@ -82,6 +83,7 @@ function Tree(options){
 	console.log('options["menu_shift"]=', options["menu_shift"]);
     self.menu_shift = options["menu_shift"]?options["menu_shift"]:[0,0];
 
+    // TODO: generalize to BaseComponent object
     // create necessary storage divs
     self.storage = options["storage"]?options["storage"]:false;
     if (self.storage)
@@ -140,17 +142,13 @@ Tree.prototype.mk_storages = function(){
 Tree.prototype.mk_container = function(){
     /*I.e. add container to storage if last exist*/
     var self = this;
-    if (self.storage){
-	let container = document.createElement('div');
-	let original_container_div_id = self.container_div_id.slice(1);
-	container.id = original_container_div_id;
-	self.storage.appendChild(container);    
-	console.log("mk_container: self.storage:", self.storage);
-    }
+    if (self.storage)
+	mk_container(self.storage, self.container_div_id.slice(1));
 }
 
 
 Tree.prototype.fill_container = function(){
+    /*Fill existing container*/
     var self = this;
     
     var original_tree_div_id = self.tree_div_id.slice(1);
@@ -180,6 +178,7 @@ Tree.prototype.fill_container = function(){
 
 
 Tree.prototype.free_container = function(){
+    /*Remove container-s contant*/
     $(self.tree_div_id).remove();
     $(self.menu_div_id).remove();
     $(self.input_div_id).remove();
@@ -187,7 +186,7 @@ Tree.prototype.free_container = function(){
 }
 
 Tree.prototype.mk_tree = function(init_data){
-    /*Only if storage have been given during initialization of Tree*/
+    /*Only if a storage have been given during initialization of the Tree*/
     var self = this;
     self.mk_storages();
     self.create_tree(init_data);

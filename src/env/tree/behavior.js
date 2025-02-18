@@ -1,11 +1,18 @@
 import {events} from 'behavior-store/src/index.js';
 
+class Fsm{
+    unregister(handlers){
 
-class HostFsm{
+	handlers.forEach((name)=> events.off(name));
+    }
+}
+
+class HostFsm extends(Fsm){
     /*The HostFsm or Parent of TreeFsm. They both sharing same
      `stack` i.e. same root through the eHandler events names
      i.e. through the observer pattern*/
     constructor(idx){
+	super();
 	var self = this;
 	this.idx = idx;
 	
@@ -54,10 +61,19 @@ class HostFsm{
 	});
 
     }
+
+    unregister(){
+	var self = this;
+	super.unregister([self.idx+".update.enter",
+			  self.idx+".join.enter",
+			  self.idx+".add.enter"
+			 ]);
+	events.show_observers();
+    }
 }
 
 
-class TreeFsm{
+class TreeFsm extends(Fsm){
     /*
      This looks like signle State rather then fsm.
      State.enter -> register on parent.on_exit methods
@@ -71,7 +87,7 @@ class TreeFsm{
 
      */
     constructor(idx, parent_idx){
-
+	super();
 	var self = this;
 	self.idx = idx;
 	self.parent_idx = parent_idx;
@@ -82,6 +98,7 @@ class TreeFsm{
 	});
 
 	// FOR |specific methods from parent fsm:
+	// TODO: subs_to_parents
 
 	// state == updating
 	events.on(self.parent_idx+".update.exit", ({event_type, args, trace})=>{
@@ -110,6 +127,7 @@ class TreeFsm{
 	});
 
 	// FOR specific methods from children:
+	// TODO: subs_to_child
 
 	// state == idle
 	events.on(self.idx+".join", ({event_type, args, trace})=>{
@@ -132,6 +150,21 @@ class TreeFsm{
 	this._transitions = {};	
     }
 
+    unregister(){
+	var self = this;
+	super.unregister([
+	    self.idx+".mk_tree",
+	     self.idx+".join",
+	    self.idx+".mk",
+	    self.idx+".update",
+
+	    self.parent_idx+".update.exit",
+	    self.parent_idx+".join.exit",
+	    self.parent_idx+".add.exit",
+	]);
+    }
+
+
     update(){
 	const self = this;
 
@@ -139,7 +172,7 @@ class TreeFsm{
 	events.emit(self.parent_idx+".update.enter", {fargs:{url:"url"}});
 	
     }
-
+    
     join(){
 	// collecting input/percept
 	const self = this;
@@ -177,8 +210,27 @@ class TreeFsm{
 
 /* This Input is responsible for keyboard shortcuts */
 class IO{
+    // TODO: instead of tree_fsm_idx use ActionsQueue
+    // so it will not be restricted by Tree only 
     constructor(tree_fsm_idx){
-	document.addEventListener('keyup', (event)=>{
+	
+	document.addEventListener('keyup', this.keys_handler);
+
+	// 'onclick'
+	window.addEventListener('onclick', this.click_handler);
+	
+    }
+
+    unregister(){
+	document.removeEventListener('keyup', this.keys_handler);
+	document.removeEventListener('keyup', this.click_handler);
+    }
+
+    click_handler(event){
+	console.log("onclick");
+    }
+
+    keys_handler(event){
 	    console.log("event.key:", event.key);
 	    if(event.key == "a")
 		events.emit(tree_fsm_idx+".mk", {});
@@ -186,16 +238,7 @@ class IO{
 	    if(event.key == "u")
 		events.emit(tree_fsm_idx+".update", {});
 
-	});
-
-	// 'onclick'
-	window.addEventListener('onclick', (event)=>{
-	    console.log("onclick");
-	});
-	
-	
-	// document.removeEventListener('keyup', key_handler);
-    }
+    }	
 }
 
 

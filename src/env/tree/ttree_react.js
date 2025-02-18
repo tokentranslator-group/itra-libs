@@ -5,21 +5,24 @@ import ReactDOM from 'react-dom';
 import {events} from 'behavior-store/src/index.js';
 import {IO, TreeFsm, HostFsm} from './behavior.js';
 
+// helper:
+import {mk_tree} from './ttree_helpers.js';
 
-function TreeComponent({tree_wrapper_id,  tree_data, mk_tree}){
+
+function TreeComponent({tree_wrapper_id,  tree_options}){
     /*
      - ``tree_wrapper_id`` - id to use for component wrapper.
      Must not exist yet.
      */
     const tree = useRef();
     const storage = useRef(tree_wrapper_id);
-    const [tree_state, set_tree_state] = useState(tree_data);
+    const [tree_state, set_tree_state] = useState(tree_options.tree_data);
 
     // on tree_data update
     useEffect(()=>{
 	events.emit("Host1.update.exit", {
-	    fargs: {tree_data: tree_data}});
-    }, [tree_data]);
+	    fargs: {tree_data: tree_options.tree_data}});
+    }, [tree_options.tree_data]);
 
 
     // on init/exit
@@ -30,26 +33,26 @@ function TreeComponent({tree_wrapper_id,  tree_data, mk_tree}){
 	const io = new IO("TreeFsm1");    
     
 	// console.log("storage.current", storage.current);
-	if (!tree.current)
+	if (!tree.current){
+	    console.log("ENTERING: calling mk_tree to init the three.current");
 	    tree.current = mk_tree({
 		storage: storage.current,
 		
-		container_id: "mc_0",
-		tree_id: "left_tree_id",
-		menu_id: "menu_id",
-		input_id: "input_id",
-		search_id: "search_id",
-
-		tree_fsm_idx:"TreeFsm1",
-
-		tree_data: tree_data
+		options:tree_options
 	    });
+	}
 	else
-	    tree.current.reload_container();
-
+	    {
+		console.log("calling tree.current.reload_container");
+		tree.current.reload_container();
+	    }
 	events.emit("TreeFsm1.mk_tree", {fargs: {tree: tree.current}});
 	return ()=>{
+	    console.log("EXITING: calling tree.current.rm_tree");
 	    tree.current.rm_tree();
+	    io.unregister();
+	    tree_fsm.unregister();
+	    host_fsm.unregister();
 	};
     }, []);
 

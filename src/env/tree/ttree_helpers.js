@@ -1,8 +1,12 @@
 import {events} from 'behavior-store/src/index.js';
 import {Tree, sort_children} from './ttree.js';
 
+function throw_error(msg){
+    throw new Error(msg);
+}
 
-function  mk_tree({storage, container_id, tree_id, menu_id, input_id, search_id, tree_fsm_idx, tree_data}){
+
+function  mk_tree({storage, options}){
     /*
      All ids have to be uinique for each call. Or old one have to be removed with tree.rm_tree()
 
@@ -12,9 +16,17 @@ function  mk_tree({storage, container_id, tree_id, menu_id, input_id, search_id,
 
      - ``tree_fsm_idx`` -- the name of fsm to call upon (like TreeFsm1 for instance)
      */
+
+    const container_id = options.container_id?options.container_id:throw_error("mk_tree: container_id missed");
+    const tree_id = options.tree_id?options.tree_id:throw_error("mk_tree: tree_id missed");
+    const menu_id = options.menu_id?options.menu_id:throw_error("mk_tree: menu_id missed");
+    const input_id = options.input_id?options.input_id:throw_error("mk_tree: input_id missed");
+    const search_id = options.search_id?options.search_id:throw_error("mk_tree: search_id missed");
+    const tree_fsm_idx = options.tree_fsm_idx?options.tree_fsm_idx:throw_error("mk_tree: tree_fsm_idx missed");
+    const tree_data = options.tree_data?options.tree_data:throw_error("mk_tree: tree_data missed");
+
+    const actions = options.actions?options.actions:throw_error("mk_tree: actions missed");
     
-
-
     const tree = new Tree({
 	
 	storage: storage,
@@ -31,29 +43,11 @@ function  mk_tree({storage, container_id, tree_id, menu_id, input_id, search_id,
 	tree_data: tree_data,
 
 	activator: function(event, data){
-	    console.log("clicked on: ", data.node.title);
+	    actions["activate"](event, data);
 	},
-
-	// FOR menu:
-	menu_items: ["join", "mk", "load", "save"],
-	
-	menu_tooltips: ["join", "mk", "load entry", "rewrite selected model"],
-
-	// keys here must be equal to ``menu_items``:
-	menu_callbacks: {
-	    "join": ()=>events.emit(tree_fsm_idx+".join", {}),
-	    "mk": ()=>{
-		console.log("mk...");
-		events.emit(tree_fsm_idx+".mk", {});
-	    },
-	    "load": ()=>{
-		console.log("loading...");
-		
-		// fsm.emit("add.enter")
-	    },
-	    "save": ()=>console.log("saving...")
-	    }
-	// END FOR
+	menu_items: actions.menu.items,
+	menu_tooltips: actions.menu.tooltips,
+	menu_callbacks: actions.menu.callbacks
     });
     events.emit("TreeFsm1.mk_tree", {fargs: {tree: tree}});
 
