@@ -72,7 +72,8 @@ class Storage{
     }
 
     rm_container(){
-	this.$(self.container_div_id).remove();
+	
+	this.$(this.container_div_id).remove();
 
     }
 
