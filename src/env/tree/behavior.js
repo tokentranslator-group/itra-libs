@@ -153,11 +153,13 @@ class TreeFsm extends(Fsm){
     unregister(){
 	var self = this;
 	super.unregister([
+	    // self:
 	    self.idx+".mk_tree",
-	     self.idx+".join",
+	    self.idx+".join",
 	    self.idx+".mk",
 	    self.idx+".update",
 
+	    // parents:
 	    self.parent_idx+".update.exit",
 	    self.parent_idx+".join.exit",
 	    self.parent_idx+".add.exit",

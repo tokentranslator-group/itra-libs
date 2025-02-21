@@ -39,6 +39,9 @@ class Storage{
 	
 	// create necessary storage divs
 	self.storage = options["storage"]?options["storage"]:false;
+	if(!self.storage)
+	    throw new Error("Storage.mk_storage: storage should be defined!");
+
 	/*
 	 // cannot use it here since the problem described above
 	 
@@ -51,8 +54,6 @@ class Storage{
 	/* The storage have to be given during initialization*/
 	
 	var self = this;
-	if(!self.storage)
-	    throw new Error("Storage.mk_storage: storage should be defined!");
 	self.mk_container();
 
 	// Problem here: this function will be overriden and hence

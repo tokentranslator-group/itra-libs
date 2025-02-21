@@ -1,8 +1,13 @@
 console.log("log parser_base.js");
 
 import $ from 'jquery';
+import * as ui from 'jquery-ui';
+
+import 'jquery-ui/ui/widgets/tabs';
+import 'jquery-ui/ui/widgets/dialog';
+
 import {Tabs} from './ttabs.js';
-import {Tags} from './ttags.js';
+import {Tags} from '../ttags.js';
 
 /*
 define(['require', 'jquery', 'ttabs', 'ttags'],
@@ -21,6 +26,7 @@ define(['require', 'jquery', 'ttabs', 'ttags'],
 	        div_id: "scene",
 	        subdiv_id_name: "parser",
 	        header: "header",
+
 	        tabs_ids: ["parser", "out"],
 	        tabs_contents: ["2+2", "4"],
 	        field_tags: ["math"],
@@ -44,21 +50,13 @@ function ETabs(options){
 	console.log(options);
     }
 
-    // TODO: generalize to BaseComponent object
-    // create necessary storage divs
-    self.storage = options["storage"]?options["storage"]:false;
-    const div_id = options.div_id;
-
-    // container in this case will be the editor itself
-    if (self.storage)
-	mk_container(self.storage, div_id);
-
     Tabs.call(this, options);
 
+    self.data.field_tags = options.data.field_tags;
     self.tags = new Tags({
-	div_tags_storage: self.get_field_tags_storage_id(),
+	div_tags_storage_id: self.get_field_tags_storage_id(),
 	div_field_tags_id: self.get_field_tags_id(),
-	data: {field_tags: options.field_tags}
+	data: {field_tags: options.data.field_tags}
     });
 
 };
@@ -84,6 +82,7 @@ ETabs.prototype.get_field_tags_id = function(){
 ETabs.prototype.load = function(json_data){
     /*
      Load tabs from json.
+     Only Etabs.load method is public.
 
      -- ``json_data`` - must contain "tabs_ids",
      "tabs_contents".
@@ -120,7 +119,7 @@ ETabs.prototype.create_tabs = function(){
     
     // for field_tabs:
     board_str += self.tags.draw_tags();
-
+    
     // for add dialog div:
     board_str += self.draw_dialog(self.get_dialog_id(), self.get_dialog_editor_id());
 

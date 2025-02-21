@@ -9,20 +9,20 @@ import {IO, TreeFsm, HostFsm} from './behavior.js';
 import {mk_tree} from './ttree_helpers.js';
 
 
-function TreeComponent({tree_wrapper_id,  tree_options}){
+function TreeComponent({storage_id,  options}){
     /*
      - ``tree_wrapper_id`` - id to use for component wrapper.
      Must not exist yet.
      */
     const tree = useRef();
-    const storage = useRef(tree_wrapper_id);
-    const [tree_state, set_tree_state] = useState(tree_options.tree_data);
+    const storage = useRef(); // storage_id
+    const [tree_state, set_tree_state] = useState(options.data);
 
     // on tree_data update
     useEffect(()=>{
 	events.emit("Host1.update.exit", {
-	    fargs: {tree_data: tree_options.tree_data}});
-    }, [tree_options.tree_data]);
+	    fargs: {tree_data: options.tree_data}});
+    }, [options.tree_data]);
 
 
     // on init/exit
@@ -38,14 +38,16 @@ function TreeComponent({tree_wrapper_id,  tree_options}){
 	    tree.current = mk_tree({
 		storage: storage.current,
 		
-		options:tree_options
+		options:options
 	    });
 	}
 	else
 	    {
-		console.log("calling tree.current.reload_container");
+		// TODO: this code seems never used
+		console.log("RELOADING: calling tree.current.reload_container");
 		tree.current.reload_container();
 	    }
+	// initiate the fsm with the tree:
 	events.emit("TreeFsm1.mk_tree", {fargs: {tree: tree.current}});
 	return ()=>{
 	    console.log("EXITING: calling tree.current.rm_tree");

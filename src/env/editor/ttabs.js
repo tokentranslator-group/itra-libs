@@ -1,6 +1,8 @@
 console.log("log parser_base.js");
 
 import $ from 'jquery';
+import * as ui from 'jquery-ui';
+
 import 'jquery-ui/ui/widgets/dialog';
 import 'jquery-ui/ui/widgets/tabs';
 
@@ -42,7 +44,7 @@ function Tabs(options){
      
      - ``subdiv_id_name`` -- name for sub id's, which be used.
 
-     - ``header`` -- header for title.
+     - ``name`` -- header for title.
      
      - ``tabs_ids`` -- list with names for each tab.
      (ex: ["lex", "cs_0"])
@@ -65,7 +67,7 @@ function Tabs(options){
      self.tabs = new tabs.Tabs({
      div_id: "scene",
      subdiv_id_name: "parser",
-     header: "header",
+     name: "header",
      tabs_ids: ["parser", "out"],
      tabs_contents: ["2+2", "4"],
      buttons_names: ["save"],
@@ -105,26 +107,41 @@ function Tabs(options){
     self.dbg = true;
     if(self.dbg)
 	console.log("options = ", options);
+
+    // TODO: to options.settings
     self.content_width_percent = "91";
     self.content_height_px = "300";
+
+    // TODO: generalize to BaseComponent object
+    // create necessary storage divs
+    if(!options.storage)
+	throw new Error("storage arg to ttabs is mandatory!");
     
-    var div_id = options.div_id;
+    self.storage = options["storage"];
+    self.storage.mk_storages();
+    // 20.02.2025
+    // TODO: all get/set ids methods to storage
+    // Hint: ttabs_extended also used them!
+
+    // div_id here used for editor itself
+    // and also for its various subdivs ids:
+    const div_id = self.storage.container_div_id;
     self.set_div_id(div_id);
-    var subdiv_id_name = options.subdiv_id_name || "parser";
-    self.set_subdiv_id_name(subdiv_id_name);
-    
-    self.header = options.header || "header";
+
+    self.subdiv_id_name = self.storage.subdiv_id_name || "parser";
+        
+    self.name = options.name || "ttabs";
     
     self.data = {};
-    self.data["tabs_ids"] = options.tabs_ids
+    self.data["tabs_ids"] = options.data.tabs_ids
 	|| ["tab0", "tab1"];
-    self.data["tabs_contents"] = options.tabs_contents
+    self.data["tabs_contents"] = options.data.tabs_contents
 	|| ["tab0 contents", "tab1 contents"];
 
-    self.buttons_names = options.buttons_names || [subdiv_id_name];
+    self.buttons_names = options.actions.buttons_names || [self.subdiv_id_name];
 
     // ``parse`` button for each tab. see default for format:
-    self.tabs_buttons_callbacks = options.tabs_buttons_callbacks
+    self.tabs_buttons_callbacks = options.actions.tabs_buttons_callbacks
 	|| [function(tab_id, tab_content_text_id){
 	    return(function(event){
 		if(self.dbg){
@@ -144,6 +161,7 @@ function Tabs(options){
 	    });}];
 
     // when clicked at dialogs ``Edit`` button
+    // given from ttabs_extended:
     self.dialog_edit_callback = options.dialog_edit_callback
 	|| self.dialog_editor_callback; 
     
@@ -220,6 +238,7 @@ Tabs.prototype.dialog_editor_callback =  function(tab_content_text_div_id, edito
 	    $( this ).dialog( "close" );
 	});};
 
+// TODO: move all of them to storage
 // FOR get/set:
 Tabs.prototype.set_div_id = function(div_id){
     
@@ -239,16 +258,6 @@ Tabs.prototype.set_div_id = function(div_id){
     if(self.dbg)
 	console.log("self.div_id = ", self.div_id);
     
-};
-
-Tabs.prototype.set_subdiv_id_name = function(subdiv_id_name){
-
-    /*name for all sub id's, which be used*/
-
-    var self = this;
-    self.subdiv_id_name = subdiv_id_name;
-    if(self.dbg)
-	console.log("self.subdiv_id_name = ", self.subdiv_id_name);
 };
 
 Tabs.prototype.get_tabs_id = function(){
@@ -364,7 +373,10 @@ Tabs.prototype.load = function(json_data){
      "tabs_contents".
      */
     var self = this;
-    self.remove();
+
+    // only free, not remove:
+    self.storage.free_container();
+
     if(self.dbg){
 	console.log("from ttabs.load:");
 	console.log("self.data = ", self.data);
@@ -412,9 +424,11 @@ Tabs.prototype.save = function(){
 
 
 Tabs.prototype.remove = function(){
-    /*Will not remove the container*/
+    /*Will remove the container*/
     var self = this;
-    $("#"+ self.div_id).empty();
+    self.storage.rm_container();
+    //$("#"+ self.div_id).empty();
+
     // $("#"+self.get_buttons_id()).remove();
     // $("#"+self.get_dialog_id()).remove();
     // $("#"+self.get_tabs_id()).remove();
@@ -432,6 +446,7 @@ Tabs.prototype.create_tabs = function(){
     var board_str = self.draw_tabs();
     board_str += self.draw_dialog(self.get_dialog_id(), self.get_dialog_editor_id());
     
+    // TODO: to storage
     $("#"+self.div_id).html(board_str);
     // $(self.div_id).addClass("above_net_left");
 
@@ -725,7 +740,7 @@ Tabs.prototype.draw_tabs = function(){
     var self = this;
 
     var board_str = 
-	    ('<p >'+self.header+'</p>' // class="ui-widget-header"
+	    ('<p >'+self.name+'</p>' // class="ui-widget-header"
 	     + '<div id="'+self.get_tabs_id()+'">'
 	     + '<ul id="'+self.get_tabs_uls_id()+'">');
     self.items_ids = 0;
