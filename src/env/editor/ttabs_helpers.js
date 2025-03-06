@@ -1,4 +1,27 @@
 import {ETabs} from './ttabs_extended.js';
+import {NamedEditorStorage} from './storage.js';
+
+class Editor{
+    
+    constructor({name, storage_ref, data, actions}){
+	this.editor = new ETabs({
+	    name: name,
+	    storage: new NamedEditorStorage(storage_ref, name),
+	    data:data,
+	    actions: actions
+	});
+	
+    }
+
+    mk(){
+	console.log("Editor.editor.storage:", this.editor.storage);
+	this.editor.create_tabs();
+    }
+    rm(){
+	this.editor.remove();
+    }
+}
+
 
 function mk_editor({storage, options}){
 	
@@ -18,4 +41,4 @@ function mk_editor({storage, options}){
     return tabs;
 }
 
-export{mk_editor}
+export{Editor, mk_editor}

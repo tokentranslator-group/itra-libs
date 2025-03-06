@@ -11,6 +11,8 @@ import {TreeBehavior, IO, TreeFsm, HostFsm} from '../env/tree/behavior.js';
 
 
 function TestComponent({init_data}){
+    // host_name, component, init_data, new_data, actions
+
     const [data, set_data] = useState(init_data);
     const [counter, set_counter] = useState(0);
     const [show, set_show] = useState(true);

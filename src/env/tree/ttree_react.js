@@ -3,7 +3,7 @@ import {useState, useEffect, useRef} from 'react';
 import ReactDOM from 'react-dom';
 
 import {events} from 'behavior-store/src/index.js';
-import {TreeBehavior, IO, TreeFsm, HostFsm} from './behavior.js';
+// import {TreeBehavior, IO, TreeFsm, HostFsm} from './behavior.js';
 
 // helper:
 import {Tree, mk_tree} from './ttree_helpers.js';
@@ -22,7 +22,7 @@ function TreeComponent({name, host_name, data, actions}){
     
     const tree = useRef();
     const storage = useRef(); // storage_id
-    const [tree_state, set_tree_state] = useState(data);
+    // const [tree_state, set_tree_state] = useState(data);
 
     // on tree_data update
     useEffect(()=>{
@@ -34,6 +34,7 @@ function TreeComponent({name, host_name, data, actions}){
 
     // on init/exit
     useEffect(()=>{
+
 	const tree = new Tree({
 	    name: name,
 	    host_name: host_name,
@@ -42,20 +43,12 @@ function TreeComponent({name, host_name, data, actions}){
 	    actions: actions
 	});
 
-
     
 	// console.log("storage.current", storage.current);
 	if (!tree.current){
 	    tree.mk();
 	    console.log("ENTERING: calling mk_tree to init the three.current");
 	    tree.current = tree;
-	    /*
-	    tree.current = mk_tree({
-		storage_settings: {...storage_settings, storage:storage.current},
-		behavior_settings: behavior_settings,
-		data:data
-	    });
-	     */
 	}
 	else
 	    {
@@ -63,16 +56,10 @@ function TreeComponent({name, host_name, data, actions}){
 		console.log("RELOADING: calling tree.current.reload_container");
 		tree.current.tree.reload_container();
 	    }
-	
-	// initiate the fsm with the tree:
-	// tree_behavior.apply("init_tree", {tree: tree.current});
 
 	return ()=>{
 	    console.log("EXITING: calling tree.current.rm_tree");
 	    tree.rm();
-	    // tree.current.rm_tree();
-	   // tree_behavior.apply("rm_tree");
-	   // tree_behavior.exit();
 	};
     }, []);
 

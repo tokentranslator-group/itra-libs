@@ -114,9 +114,8 @@ function Tabs(options){
 
     if(!options.storage)
 	throw new Error("storage arg to ttabs is mandatory!");
-    
     self.storage = options["storage"];
-    self.storage.mk_storages();
+
     // 20.02.2025
     // TODO: all get/set ids methods to storage
     // Hint: ttabs_extended also used them!
@@ -373,6 +372,8 @@ Tabs.prototype.load = function(json_data){
     var self = this;
 
     // only free, not remove:
+    // TODO: remove it instead since
+    // this will be added by create_tabs
     self.storage.free_container();
 
     if(self.dbg){
@@ -424,6 +425,7 @@ Tabs.prototype.save = function(){
 Tabs.prototype.remove = function(){
     /*Will remove the container*/
     var self = this;
+    self.storage.free_container();
     self.storage.rm_container();
     //$("#"+ self.div_id).empty();
 
@@ -437,6 +439,8 @@ Tabs.prototype.create_tabs = function(){
     /*Create tabs, apply dialog and callbacks*/
 
     var self = this;
+    self.storage.mk_storages();
+
     if(self.dbg){
 	console.log("from create_tabs");
 	console.log("self.data = ", self.data);

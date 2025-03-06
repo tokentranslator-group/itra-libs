@@ -1,11 +1,11 @@
 import React from 'react';
 import {useState, useEffect, useRef} from 'react';
 import ReactDOM from 'react-dom';
-import {EditorStorage} from './storage.js';
-import {ETabs} from './ttabs_extended.js';
+
+import {Editor} from './ttabs_helpers.js';
 
 
-function EditorComponent({data}){
+function EditorComponent({name, host_name, data, actions}){
     /*
      - ``tree_wrapper_id`` - id to use for component wrapper.
      Must not exist yet.
@@ -17,7 +17,7 @@ function EditorComponent({data}){
     // on tree_data update
     useEffect(()=>{
 	console.log("data being updated");
-	// events.emit("Host1.update.exit", {
+	// events.emit(host_name+".update.exit", {
 	//    fargs: {editor_data: data}});
     }, [data]);
 
@@ -25,43 +25,20 @@ function EditorComponent({data}){
     // on init/exit
     useEffect(()=>{
 
-	// const host_fsm = new HostFsm("Host1");
-	//const tree_fsm = new TreeFsm("TreeFsm1", "Host1");
+	// component.storage should not be initiated on init but on mk!
+	// since storage.current not yet having been initiated 
+	const editor = new Editor({
+	    name: name,
+	    storage_ref: storage.current, 
+	    data:data,		
+	    actions: actions
+	});
 	
-	// const io = new IO("TreeFsm1");    
-    
-	// console.log("storage.current", storage.current);
 	if (!editor.current){
 	    console.log("ENTERING: calling new ETabs():");
-	    editor.current = new ETabs({
-		name: "Editor",
-		storage: new EditorStorage({
-		    storage: storage.current,
-		    container_div_id: "mc_0",
-		    subdiv_id_name: "parser"}),
-		
-		data:data,
-		
-		actions: {
 
-		    // TODO: unite to dict:
-		    buttons_names: ["save", "refresh", "copy"],
-		    tabs_buttons_callbacks:[
-			(tab_id, tab_content_text_id)=>{
-			    console.log("save");
-			},
-			(tab_id, tab_content_text_id)=>{
-			    console.log("refresh");
-			},
-			(tab_id, tab_content_text_id)=>{
-			    console.log("copy");
-			}
-			
-		    ]}
-	    });
-	    editor.current.create_tabs();
-	    // events.emit("TreeFsm1.mk_tree", {fargs: {tree: tree}});
-
+	    editor.mk();
+	    editor.current = editor;
 	}
 	else
 	    {
@@ -71,11 +48,8 @@ function EditorComponent({data}){
 	// events.emit("EditorFsm.mk_editor", {fargs: {editor: editor.current}});
 	return ()=>{
 	    console.log("EXITING: calling editor.current.rm_tree");
-	    editor.current.remove();
+	    editor.rm();
 
-	    // io.unregister();
-	    // tree_fsm.unregister();
-	    // host_fsm.unregister();
 	};
     }, []);
 

@@ -5,6 +5,9 @@ import {TreeBehavior} from './behavior.js';
 
 
 class Tree{
+
+    /*TreeFrame+TreeBehavior*/
+
     constructor({name, host_name, storage_ref, data, actions}){
 	this.name = name;
 
@@ -53,45 +56,33 @@ function throw_error(msg){
 }
 
 
-function  mk_tree({storage_settings, behavior_settings, data}){
-    /*
-     All ids have to be uinique for each call. Or old one have to be removed with tree.rm_tree()
+function check(name, options, attribute){
+    let attr = options[attribute]?options[attribute]:throw_error(name+": options."+attribute+" missed");
+    return attr;
+}
 
+
+function  mk_tree({storage, name, host_name, data, actions}){
+    /*
      - ``storage`` -- where the tree object will be put in.
      Will not be created here, should exist alredy.
      Others ids will be created and should not exist.
-
-     - ``tree_fsm_idx`` -- the name of fsm to call upon (like TreeFsm1 for instance)
      */
 
-    const tree_fsm_idx = behavior_settings.tree_fsm_idx?behavior_settings.tree_fsm_idx:throw_error("mk_tree: behavior_settings.tree_fsm_idx missed");
-    const tree_data = data?data:throw_error("mk_tree: tree_data missed");
-
-    const actions = behavior_settings.actions?behavior_settings.actions:throw_error("mk_tree: behavior_settings.actions missed");
+    // const name = check("mk_tree", options, "name");
+    // const tree_data = check("mk_tree", options, "data");
+    // const actions = check("mk_tree", options, "actions");
     
-    const tree = new TreeFrame({
-	
-	storage: new TreeStorage(storage_settings),
-
-	// for avoiding canvas influence:
-	menu_shift: 0, // parseInt(menu_shift_controls_top, 10),
-
-	// url: url,
-	tree_data: tree_data,
-
-	activator: function(event, data){
-	    actions["activate"](event, data);
-	},
-	menu_items: actions.menu.items,
-	menu_tooltips: actions.menu.tooltips,
-	menu_callbacks: actions.menu.callbacks
+    const tree = new Tree({
+	name: name,
+	host_name: host_name,
+	storage_ref: storage,
+	data: data,
+	actions: actions
     });
-
-    //tree.mk_tree();
-    events.emit(tree_fsm_idx+".mk_tree", {fargs: {tree: tree}});
 
     return tree;
 }
 
 
-export{Tree, mk_tree, throw_error}
+export{Tree, mk_tree, throw_error, check}

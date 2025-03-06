@@ -21,4 +21,14 @@ class EditorStorage extends(Storage){
 
 }
 
-export{EditorStorage};
+class NamedEditorStorage extends(EditorStorage){
+    constructor(storage_ref, name){
+	
+	super({
+	    storage: storage_ref,
+	    container_div_id: "mc_0_"+name,
+	    subdiv_id_name: "parser_"+name});
+    }
+}
+
+export{EditorStorage, NamedEditorStorage};

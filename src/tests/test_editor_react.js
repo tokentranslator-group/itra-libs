@@ -20,7 +20,27 @@ function TestComponent({init_data}){
     let editor = <div/>;
 
     if(show)
-	editor = <EditorComponent data={data}/>;
+	editor = <EditorComponent
+    name={"Editor"}
+
+    data={data}
+	
+    actions={{
+	
+	// TODO: unite to dict:
+	buttons_names: ["save", "refresh", "copy"],
+	tabs_buttons_callbacks:[
+	    (tab_id, tab_content_text_id)=>{
+		console.log("save");
+	    },
+	    (tab_id, tab_content_text_id)=>{
+		console.log("refresh");
+	    },
+	    (tab_id, tab_content_text_id)=>{
+		console.log("copy");
+	    }
+	    
+	]}}/>;
 
     return(<div>
 	   <button onClick={()=>update()}> test update tree</button>

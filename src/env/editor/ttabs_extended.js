@@ -113,6 +113,7 @@ ETabs.prototype.create_tabs = function(){
      and ``self.tags.data["field_tags"]``*/
 
     var self = this;
+    self.storage.mk_storages();
 
     var board_str = self.draw_tabs();
     board_str += self.draw_tabs_buttons();
