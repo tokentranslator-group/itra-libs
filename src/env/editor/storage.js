@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import {Storage} from '../basic.js';
+import {Storage} from '../storage/basic.js';
 
 
 class EditorStorage extends(Storage){

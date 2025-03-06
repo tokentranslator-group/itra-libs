@@ -97,6 +97,10 @@ class TreeFsm extends(Fsm){
 	    self.tree = args.tree;
 	});
 
+	events.on(self.idx+".rm_tree", ({event_type, args, trace})=>{
+	    self.tree.rm_tree();
+	});
+
 	// FOR |specific methods from parent fsm:
 	// TODO: subs_to_parents
 
@@ -249,5 +253,41 @@ class IO{
     }	
 }
 
+/* The Root of the tree behavior */
+class TreeBehavior{
+    constructor({host_name, tree_name}){
+	this.host_name = host_name;
+	this.tree_name = tree_name;
+    }
+    
+    enter(){
+	this.host_fsm = new HostFsm(this.host_name);
+	this.tree_fsm = new TreeFsm(this.tree_name, this.host_name);
+	this.io = new IO(this.tree_name);    
+    }
+    
+    // some kind of reducer here:
+    apply(action_name, args){
+	switch(action_name){
 
-export{IO, TreeFsm, HostFsm}
+	    case "init_tree":
+	    // initiate the fsm with the tree:
+	    events.emit(self.tree_name+".mk_tree", {fargs: args});
+	    break;
+
+	    case "rm_tree":
+	    events.emit(self.tree_name+".rm_tree", {fargs:args});
+	    break;
+
+	    default: throw new Error("TreeBehavior.apply: no such action: ", action_name);
+	}}
+    
+    exit(){
+	this.io.unregister();
+	this.tree_fsm.unregister();
+	this.host_fsm.unregister();
+    }
+}
+
+
+export{TreeBehavior, IO, TreeFsm, HostFsm}

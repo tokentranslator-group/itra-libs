@@ -5,6 +5,7 @@ import ReactDOM from 'react-dom';
 import {events} from 'behavior-store/src/index.js';
 
 import {TreeComponent} from '../env/tree/ttree_react.js';
+import {TreeBehavior, IO, TreeFsm, HostFsm} from '../env/tree/behavior.js';
 
 
 
@@ -29,48 +30,43 @@ function TestComponent({init_data}){
 	set_data(new_tree_data);
 	set_counter(new_counter);
     }
-    let tree_fsm_idx = "TreeFsm1";
+    let tree_name = "LTree";
     let tree = <div/>;
 
     // storage_id={"react_tree_storage"}
     if(show)
-	tree = <TreeComponent 
-	   options = {{
-	       container_id: "mc_0",
-	       tree_id: "left_tree_id",
-	       menu_id: "menu_id",
-	       input_id: "input_id",
-	       search_id: "search_id",
-	       
-	       tree_fsm_idx: tree_fsm_idx,
-	       
-	       tree_data: data,
-	       actions: {
-		   activate: (event, data) => console.log("clicked on: ", data.node.title),
+	tree = <TreeComponent
 
-		   menu:{
-		       
-		       items: ["join", "mk", "load", "save"],
-		       tooltips: ["join", "mk", "load entry", "rewrite selected model"],
+    name={tree_name}
 
-		       // keys here must be equal to ``menu_items``:
-		       callbacks: {
-			   "join": ()=>events.emit(tree_fsm_idx+".join", {}),
-			   "mk": ()=>{
-			       console.log("mk...");
-			       events.emit(tree_fsm_idx+".mk", {});
-			   },
-			   "load": ()=>{
-			       console.log("loading...");
-			       
-			       // fsm.emit("add.enter")
-			   },
-			   "save": ()=>console.log("saving...")
-		       }
-		   }
-		   
-	       }
-	   }}/>;
+    host_name={"Host"}
+
+    data={data}
+
+    actions = {{
+	activate: (event, data) => console.log("clicked on: ", data.node.title),
+	
+	menu:{
+	    
+	    items: ["join", "mk", "load", "save"],
+	    tooltips: ["join", "mk", "load entry", "rewrite selected model"],
+	    
+	    // keys here must be equal to ``menu_items``:
+	    callbacks: {
+		"join": ()=>events.emit(tree_name+".join", {}),
+		"mk": ()=>{
+		    console.log("mk...");
+		    events.emit(tree_name+".mk", {});
+		},
+		"load": ()=>{
+		    console.log("loading...");
+		    
+		    // fsm.emit("add.enter")
+		},
+		"save": ()=>console.log("saving...")
+	    }
+	}
+    }}/>;
     
     return(<div>
 	   <button onClick={()=>update_tree()}> test update tree</button>

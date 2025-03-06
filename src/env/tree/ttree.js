@@ -24,7 +24,7 @@ import 'jquery.fancytree/dist/skin-xp/ui.fancytree.css';  // CSS or LESS
 
 // import 'jquery.fancytree/dist/modules/jquery.fancytree.filter';
 
-import {TreeStorage} from './storage.js';
+// import {TreeStorage} from './storage.js';
 import * as tmenu from '../menu/tmenu.js';
 import * as tinput from '../input/tinput.js';
 
@@ -32,7 +32,8 @@ import * as tinput from '../input/tinput.js';
 function Tree(options){
 
     /*Create tree with context menu in it.
-     
+     mk_tree is used to create tree and all necessary components placeholders
+
      Input:
      
      -- ``options.storage`` - object created with document.createElement(`div`)
@@ -69,7 +70,13 @@ function Tree(options){
     var self = this;
     // self.net = net;
 
-    self.storage = new TreeStorage(options);
+    if(!options.storage)
+	throw new Error("storage arg to ttabs is mandatory!");
+    
+    self.storage = options["storage"];
+    // self.storage.mk_storages();
+
+    // self.storage = new TreeStorage(options);
     
     self.dbg = options["dbg"] || false;
     if(self.dbg)

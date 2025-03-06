@@ -1,5 +1,10 @@
 import $ from 'jquery';
-import {Storage} from '../basic.js';
+import {Storage} from '../storage/basic.js';
+
+
+function throw_error(msg){
+    throw new Error(msg);
+}
 
 
 class TreeStorage extends(Storage){
@@ -9,10 +14,10 @@ class TreeStorage extends(Storage){
 	super(options);
 	var self = this;
 
-	self.tree_div_id = options["tree_div_id"];
-	self.menu_div_id = options["menu_div_id"];
-	self.input_div_id = options["input_div_id"];
-	self.search_div_id = options["search_div_id"];  // for filter
+	self.tree_div_id = options["tree_div_id"]?options.tree_div_id:throw_error("TreeStorage: tree_div_id missed");
+	self.menu_div_id = options["menu_div_id"]?options.menu_div_id:throw_error("TreeStorage: menu_div_id missed");
+	self.input_div_id = options["input_div_id"]?options.input_div_id:throw_error("TreeStorage: input_div_id missed");
+	self.search_div_id = options["search_div_id"]?options.search_div_id:throw_error("TreeStorage: search_div_id missed");  // for filter
     }
 
     fill_container(){
@@ -52,4 +57,17 @@ class TreeStorage extends(Storage){
 
 }
 
-export{TreeStorage};
+class NamedTreeStorage extends(TreeStorage){
+    constructor(storage_ref, name){
+	super({
+	    storage:storage_ref,
+	    container_div_id: "tree_container_id_"+ name,
+
+	    tree_div_id: "tree_id_"+name,
+	    menu_div_id: "menu_id_"+name,
+	    input_div_id: "input_id_"+name,
+	    search_div_id: "search_id_"+name
+	});
+    }
+}
+export{NamedTreeStorage, TreeStorage};

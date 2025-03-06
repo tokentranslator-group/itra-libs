@@ -112,8 +112,6 @@ function Tabs(options){
     self.content_width_percent = "91";
     self.content_height_px = "300";
 
-    // TODO: generalize to BaseComponent object
-    // create necessary storage divs
     if(!options.storage)
 	throw new Error("storage arg to ttabs is mandatory!");
     
