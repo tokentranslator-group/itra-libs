@@ -1,4 +1,4 @@
-import {events} from 'behavior-store/src/index.js';
+import {events} from 'itra-behavior/src/eHandler.js';
 
 // behavior:
 import {IO, TreeFsm, HostFsm} from '../env/tree/behavior.js';

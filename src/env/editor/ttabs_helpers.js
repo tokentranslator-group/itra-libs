@@ -4,6 +4,7 @@ import {NamedEditorStorage} from './storage.js';
 class Editor{
     
     constructor({name, storage_ref, data, actions}){
+	// this.frame
 	this.editor = new ETabs({
 	    name: name,
 	    storage: new NamedEditorStorage(storage_ref, name),
@@ -11,6 +12,7 @@ class Editor{
 	    actions: actions
 	});
 	
+	//this.behavior
     }
 
     mk(){

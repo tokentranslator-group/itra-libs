@@ -1,4 +1,4 @@
-import {events} from 'behavior-store/src/index.js';
+import {events} from 'itra-behavior/src/eHandler.js';
 
 class Fsm{
     unregister(handlers){
@@ -40,14 +40,14 @@ class HostFsm extends(Fsm){
 	});
 
 	// TODO: mk_action({enter:()=>..., exit: ()=>...}) 
-	events.on(self.idx+".update.enter", ({event_type, args, trace})=>{
+	events.on(self.idx+".update.tree.enter", ({event_type, args, trace})=>{
 	    
-	    console.log(self.idx+".update.enter: joining on server...");
+	    console.log(self.idx+".update.tree.enter: joining on server...");
 	    const url = args.url;
-	    console.log(self.idx+".update.enter: url:", url);
+	    console.log(self.idx+".update.tree.enter: url:", url);
 
 	    // data having been updated, call to everyone:
-	    events.emit(self.idx+".update.exit", {
+	    events.emit(self.idx+".update.tree.exit", {
 		fargs: {
 		    tree_data:{
 			title: "updated available", key: "1", folder: true,
@@ -64,7 +64,7 @@ class HostFsm extends(Fsm){
 
     unregister(){
 	var self = this;
-	super.unregister([self.idx+".update.enter",
+	super.unregister([self.idx+".update.tree.enter",
 			  self.idx+".join.enter",
 			  self.idx+".add.enter"
 			 ]);
@@ -105,9 +105,9 @@ class TreeFsm extends(Fsm){
 	// TODO: subs_to_parents
 
 	// state == updating
-	events.on(self.parent_idx+".update.exit", ({event_type, args, trace})=>{
+	events.on(self.parent_idx+".update.tree.exit", ({event_type, args, trace})=>{
 	    let tree_data = args.tree_data;
-	    console.log("updating tree after Parent.update.exit...");
+	    console.log("updating tree after Parent.update.tree.exit...");
 	    self.tree.update_tree(tree_data);
 
 	    // update state then
@@ -141,8 +141,8 @@ class TreeFsm extends(Fsm){
 	    
 	});
 	
-	events.on(self.idx+".mk", ({event_type, args, trace})=>{
-	    self.mk();
+	events.on(self.idx+".add", ({event_type, args, trace})=>{
+	    self.add();
 	});
 
 	events.on(self.idx+".update", ({event_type, args, trace})=>{
@@ -160,11 +160,11 @@ class TreeFsm extends(Fsm){
 	    // self:
 	    self.idx+".mk_tree",
 	    self.idx+".join",
-	    self.idx+".mk",
+	    self.idx+".add",
 	    self.idx+".update",
 
 	    // parents:
-	    self.parent_idx+".update.exit",
+	    self.parent_idx+".update.tree.exit",
 	    self.parent_idx+".join.exit",
 	    self.parent_idx+".add.exit",
 	]);
@@ -175,7 +175,7 @@ class TreeFsm extends(Fsm){
 	const self = this;
 
 	// simulate call to parent for data:
-	events.emit(self.parent_idx+".update.enter", {fargs:{url:"url"}});
+	events.emit(self.parent_idx+".update.tree.enter", {fargs:{url:"url"}});
 	
     }
     
@@ -198,7 +198,7 @@ class TreeFsm extends(Fsm){
 	    }});
     }
     
-    mk(){
+    add(){
 	var self = this;
 
 	const [x, y] = [0, 0];
@@ -245,13 +245,14 @@ class IO{
 	console.log("event.key:", event.key);
 	console.log("event.key:", self);
 	if(event.key == "a")
-	    events.emit(self.idx+".mk", {});
+	    events.emit(self.idx+".add", {});
 
 	if(event.key == "u")
 	    events.emit(self.idx+".update", {});
 
     }	
 }
+
 
 /* The Root of the tree behavior */
 class TreeBehavior{
@@ -261,22 +262,23 @@ class TreeBehavior{
     }
     
     enter(){
-	this.host_fsm = new HostFsm(this.host_name);
-	this.tree_fsm = new TreeFsm(this.tree_name, this.host_name);
+	// this.host_fsm = new HostFsm(this.host_name);
+	this.fsm = new TreeFsm(this.tree_name, this.host_name);
 	this.io = new IO(this.tree_name);    
     }
     
     // some kind of reducer here:
     apply(action_name, args){
+	
 	switch(action_name){
 
 	    case "init_tree":
 	    // initiate the fsm with the tree:
-	    events.emit(self.tree_name+".mk_tree", {fargs: args});
+	    events.emit(this.tree_name+".mk_tree", {fargs: args});
 	    break;
 
 	    case "rm_tree":
-	    events.emit(self.tree_name+".rm_tree", {fargs:args});
+	    events.emit(this.tree_name+".rm_tree", {fargs:args});
 	    break;
 
 	    default: throw new Error("TreeBehavior.apply: no such action: ", action_name);
@@ -284,8 +286,8 @@ class TreeBehavior{
     
     exit(){
 	this.io.unregister();
-	this.tree_fsm.unregister();
-	this.host_fsm.unregister();
+	this.fsm.unregister();
+	// this.host_fsm.unregister();
     }
 }
 
