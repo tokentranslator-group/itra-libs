@@ -4,8 +4,9 @@ import ReactDOM from 'react-dom';
 
 import {events} from 'itra-behavior/src/eHandler.js';
 
-import {TreeComponent} from '../env/tree/ttree_react.js';
-import {mk_tree_edp, mk_tree_fsm} from '../env/tree/ttree_helpers.js';
+import {OuterComponent} from '../env/react_wrapper.js';
+//import {TreeComponent} from '../env/tree/ttree_react.js';
+import {mk_core_comp_for_tree_edp, mk_core_comp_for_tree_fsm} from '../env/tree/ttree_helpers.js';
 import {get_host_emulator} from './test_host.js';
 import {HostComponent} from '../env/host/host_react.js';
 // import {TreeBehavior, IO, TreeFsm, HostFsm} from '../env/tree/behavior/TreeEdp.js';
@@ -14,7 +15,10 @@ import {HostComponent} from '../env/host/host_react.js';
 
 
 function TestComponent({init_data, element_builder}){
-    // host_name, component, init_data, new_data, actions
+    /*Testing:
+     dynamic data update*/
+
+    const host_name = "Host";
 
     const [data, set_data] = useState(init_data);
     const [counter, set_counter] = useState(0);
@@ -40,11 +44,11 @@ function TestComponent({init_data, element_builder}){
 
     // storage_id={"react_tree_storage"}
     if(show)
-	tree = <TreeComponent
+	tree = <OuterComponent
 
     name={tree_name}
     
-    host_name={"Host"}
+    host_name={host_name}
 
     element_builder = {(options)=>element_builder(options)}
     data={data}
@@ -71,8 +75,10 @@ function TestComponent({init_data, element_builder}){
 		},
 		"save": ()=>console.log("saving...")
 	    }
-	}
-    }}/>;
+	}}}
+    show_actions={true}
+    show_state={true}
+	/>;
     
     //
     return(<div>
@@ -87,6 +93,8 @@ function TestComponent({init_data, element_builder}){
 	   <button onClick={()=>console.log(events)}> Dbg eHandler to console</button>
 	   
 	   <br/>
+	   	
+
 	   <p>Showing the tree {show} </p>
 	   <p>Tree was updated {counter} times</p>
 	   {tree}
@@ -116,7 +124,7 @@ function test_tree(element_builder){
 }
 
 function main(){
-    test_tree(mk_tree_fsm);
+    test_tree(mk_core_comp_for_tree_fsm);
     //test_tree(mk_tree_edp);
 }
 

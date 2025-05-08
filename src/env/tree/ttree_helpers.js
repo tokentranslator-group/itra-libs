@@ -2,17 +2,46 @@ import {events} from 'itra-behavior/src/eHandler.js';
 import {Tree as TreeFrame} from './ttree.js';
 import {NamedTreeStorage, TreeStorage} from './storage.js';
 import {TreeBehavior as TreeBehEdp} from './behavior/TreeEdp.js';
-import {TreeBehavior as TreeBehFsm} from './behavior/TreeFsm.js';
+import {mk_tree_fsm} from './behavior/TreeFsm.js';
+import {BehaviorComponent, mk_core_comp, mk_core_comp_v1} from '../react_wrapper.js';
+import {throw_error, check} from '../helpers.js';
 
 
-class Tree{
+// FOR v1:
+function mk_core_comp_for_tree_fsm_v1(options){
+    /*
+     - ``options`` -- {name, host_name, storage_ref, data, actions}
+     */
+    return mk_core_comp_v1(mk_tree_frame, mk_tree_fsm, options);
+}
 
-    /*TreeFrame+TreeBehavior*/
 
-    constructor({name, host_name, storage_ref, data, actions}){
-	this.name = name;
+function mk_tree_frame({storage_ref, name, host_name, data, actions}){
+    return new TreeFrame({
+	
+	storage: new NamedTreeStorage(storage_ref, name),
+	
+	// for avoiding canvas influence:
+	menu_shift: 0, // parseInt(menu_shift_controls_top, 10),
+	
+	// url: url,
+	tree_data: data,
+	
+	activator: function(event, data){
+	    actions["activate"](event, data);
+	},
 
-	this.frame = new TreeFrame({
+	menu_items: actions.menu.items,
+	menu_tooltips: actions.menu.tooltips,
+	menu_callbacks: actions.menu.callbacks
+    });
+}
+// END FOR
+
+// FOR v0:
+function mk_core_comp_for_tree({behavior_component, storage_ref, name, host_name, data, actions}){
+    return mk_core_comp({
+	frame: new TreeFrame({
 	
 	    storage: new NamedTreeStorage(storage_ref, name),
 
@@ -25,29 +54,38 @@ class Tree{
 	    activator: function(event, data){
 		actions["activate"](event, data);
 	    },
+
 	    menu_items: actions.menu.items,
 	    menu_tooltips: actions.menu.tooltips,
 	    menu_callbacks: actions.menu.callbacks
-	});
-
+	}),
 	
-    }
-    
-    mk(){
-	
-	this.behavior.enter();
-	
-	// events.emit(this.name+".mk_tree", {fargs: {tree: this.tree}});
-
-	this.behavior.apply("init_tree", {tree: this.frame});
-    }
-    rm(){
-	this.behavior.apply("rm_tree");
-	this.behavior.exit();
-    }
+	behavior: behavior_component});
 }
 
+function mk_core_comp_for_tree_fsm(options){
+    /*Build up the CoreComponent for tree fsm behavior
+     given by mk_tree_fsm*/
+    
+    const name = check("TreeFsm", options, "name");
+    const host_name = check("TreeFsm", options, "host_name");
 
+    return mk_core_comp_for_tree({
+	...options,
+
+	behavior_component: new BehaviorComponent({
+	    name: name, host_name: host_name,
+	    behavior_builder: mk_tree_fsm})
+	});
+}
+// END FOR v0
+
+// TODO:
+function mk_core_comp_for_tree_edp(options){
+}
+
+// DEPRICATED
+/*
 class TreeEdp extends(Tree){
     constructor(options){
 	super(options);
@@ -61,7 +99,7 @@ class TreeEdp extends(Tree){
     }	 
 }
 
-
+// DEPRICATED
 class TreeFsm extends(Tree){
     constructor(options){
 	super(options);
@@ -76,23 +114,14 @@ class TreeFsm extends(Tree){
 }
 
 
-function throw_error(msg){
-    throw new Error(msg);
-}
 
-
-function check(name, options, attribute){
-    let attr = options[attribute]?options[attribute]:throw_error(name+": options."+attribute+" missed");
-    return attr;
-}
-
-
+// DEPRICATED
 function  mk_tree_edp({storage_ref, name, host_name, data, actions}){
-    /*
-     - ``storage_ref`` -- where the tree object will be put in.
-     Will not be created here, should exist alredy.
-     Others ids will be created and should not exist.
-     */
+    
+    // - ``storage_ref`` -- where the tree object will be put in.
+    // Will not be created here, should exist alredy.
+    // Others ids will be created and should not exist.
+     
 
     // const name = check("mk_tree", options, "name");
     // const tree_data = check("mk_tree", options, "data");
@@ -109,13 +138,13 @@ function  mk_tree_edp({storage_ref, name, host_name, data, actions}){
     return tree;
 }
 
-
+// DEPRICATED
 function  mk_tree_fsm({storage_ref, name, host_name, data, actions}){
-    /*
-     - ``storage_ref`` -- where the tree object will be put in.
-     Will not be created here, should exist alredy.
-     Others ids will be created and should not exist.
-     */
+    
+    // - ``storage_ref`` -- where the tree object will be put in.
+    // Will not be created here, should exist alredy.
+    // Others ids will be created and should not exist.
+    
 
     // const name = check("mk_tree", options, "name");
     // const tree_data = check("mk_tree", options, "data");
@@ -131,8 +160,7 @@ function  mk_tree_fsm({storage_ref, name, host_name, data, actions}){
     console.log("mk_tree_fsm:tree:", tree);
     return tree;
 }
+*/
 
 
-
-
-export{Tree, mk_tree_edp, mk_tree_fsm, throw_error, check}
+export{mk_core_comp_for_tree_edp, mk_core_comp_for_tree_fsm, mk_core_comp_for_tree_fsm_v1}

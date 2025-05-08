@@ -23,14 +23,20 @@ function mk_tree_fsm(host_name, state_name){
 
 	effects:{},
 
+	
 	// these been used only for mk_tree, rm_tree:
 	stacks_spec:{
 	    names: ["ActionsQueue"],
 
+	    // TODO: optional override of parent cb by current_state one 
 	    options:{ActionsQueue: {
 		inheretence: "always" // "newer" | "normal"
 	    }},
-	    
+	
+	    // all this callbacks will only work if the current_state
+	    // has no ActionsQueue support (ie for Idle state only)
+	    // if it has smth on  ActionsQueue, this cb will be
+	    // ignored!
 	    callbacks: {
 		ActionsQueue: (self, {event_type, args, trace})=>{
 		    
@@ -41,17 +47,17 @@ function mk_tree_fsm(host_name, state_name){
 		    console.log("NODE::TreeFsm.ActionsQueue: reciving action:", action_name);
 		    switch(action_name){
 			
-		    case "mk_tree":
+		    case "mk":
 			// update tree for each state:
 			Object.entries(self.states).forEach((state)=>{
 			    
-			    state[1].tree = input.tree;
+			    state[1].tree = input.frame;
 			});
 			
-			self.tree = input.tree;
+			self.tree = input.frame;
 			break;
 			
-		    case "rm_tree": self.tree.rm_tree();
+		    case "rm": self.tree.rm_tree();
 			break;
 		    }	    
 		}
@@ -143,8 +149,21 @@ function mk_tree_fsm(host_name, state_name){
 }
 
 // TODO: make keis as params:
-class IO extends(IOBase){
+/*TODO:
+  state manipulation:
 
+init
+ events.on(focused, (focused)=>{
+    if focused in self.keys:
+      self.keys[self.focused]
+ })
+
+register(name, keys)
+ self.keys[name] = keys
+
+*/
+class IO extends(IOBase){
+    
     keys_handler(event){
 	/*this.idx means/(used as) host_name here */
 	var self = this;
@@ -162,50 +181,4 @@ class IO extends(IOBase){
 
 }
 
-/* The Root of the tree behavior */
-class TreeBehavior{
-    constructor({host_name, tree_name}){
-	this.host_name = host_name;
-	this.tree_name = tree_name;
-    }
-    
-    enter(){
-	// this.host_fsm = mk_host_as_state(this.host_name);
-	// this.host_fsm.on();
-
-	this.fsm = mk_tree_fsm(this.host_name, this.tree_name);
-	// TODO: problem here: not tree available yet:
-	this.fsm.on();
-	
-	this.io = new IO(this.host_name);    
-    }
-    
-    // some kind of reducer here:
-    apply(action_name, args){
-	var self = this;
-	switch(action_name){
-
-	    case "init_tree":
-	    // initiate the fsm with the tree:
-	    console.log("mk_tree: args:", args);
-	    events.emit(self.host_name+".ActionsQueue", {
-		fargs: {
-		    action: "mk_tree", input: args}});
-	    break;
-
-	    case "rm_tree":
-	    events.emit(self.host_name+".ActionsQueue", {
-		fargs:{action: "rm_tree", input: args}});
-	    break;
-
-	    default: throw new Error("TreeBehavior.apply: no such action: ", action_name);
-	}}
-    
-    exit(){
-	this.io.unregister();
-	this.fsm.off();
-	// this.host_fsm.off();
-    }
-}
-
-export{TreeBehavior}
+export{mk_tree_fsm}
