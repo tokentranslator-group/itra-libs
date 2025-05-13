@@ -69,8 +69,16 @@ function test_tree(core_comp_builder){
 	
 	    />
 	    <button onClick={()=>{
-		events.emit("show."+tree_name, {});
-	    }}> show/hide </button>
+		events.emit("show."+tree_name, {
+		    fargs:{data:{
+			children: [{
+			    title: "data_from_show", key: "1", folder: true,
+			    children: [{title: "tokens path", key: "2"}]}]}}});
+	    }}> show </button>
+	    
+	    <button onClick={()=>{
+		events.emit("hide."+tree_name, {});
+	    }}> hide </button>
 	    <br/>
 
 	    </div>

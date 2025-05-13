@@ -18,8 +18,8 @@ export function get_host_emulator(){
 	    self:{
 		name: host_fsm.name,
 		actions:[
-		    {action: "add.enter", input: {node_name: "new node from host_emulator"}},
-		    {action: "update.enter", input: {url: "url://host_emulator.test"}},
+		    {action: "add.tree.enter", input: {node_name: "new node from host_emulator"}},
+		    {action: "update.tree.enter", input: {url: "url://host_emulator.test"}},
 		    {action: "join.enter", input: {parent: ""}},
 		] 
 	    }

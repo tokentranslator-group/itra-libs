@@ -1,6 +1,31 @@
-import {ETabs} from './ttabs_extended.js';
+import {ETabs as EditorFrame} from './ttabs_extended.js';
 import {NamedEditorStorage} from './storage.js';
+import {mk_core_comp_v1} from '../react_wrapper.js';
+import {mk_editor_fsm} from './behavior.js';
 
+
+// FOR v1:
+function mk_core_comp_for_editor_fsm_v1(options){
+    /*
+     - ``options`` -- {name, host_name, storage_ref, data, actions}
+     */
+    return mk_core_comp_v1(mk_editor_frame, mk_editor_fsm, options);
+}
+
+
+function mk_editor_frame({storage_ref, name, host_name, data, actions}){
+    return new EditorFrame({
+
+	    name: name,
+	    storage: new NamedEditorStorage(storage_ref, name),
+	    data:data,
+	    actions: actions
+    });
+}
+// END FOR
+
+// DEPRICATED:
+/*
 class Editor{
     
     constructor({name, storage_ref, data, actions}){
@@ -42,5 +67,5 @@ function mk_editor({storage, options}){
 
     return tabs;
 }
-
-export{Editor, mk_editor}
+*/
+export{mk_core_comp_for_editor_fsm_v1}

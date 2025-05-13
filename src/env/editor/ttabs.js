@@ -493,7 +493,7 @@ Tabs.prototype.apply_editor_and_buttons = function(){
 		      function(inner_id, elm){
 			  var but_id = "#" + self.get_tab_content_button_id(tab_id, inner_id);
 			  $(but_id).on("click",
-				       self.tabs_buttons_callbacks[inner_id](tab_id, edit_id));
+				       self.tabs_buttons_callbacks[inner_id](tab_id, edit_id, self));
 			  
 		      });
 	   });

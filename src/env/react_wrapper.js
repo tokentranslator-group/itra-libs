@@ -13,7 +13,7 @@ import {throw_error, check} from './helpers.js';
 class BehaviorComponent{
     constructor({host_name, name, behavior_builder}){
 	/*
-	 - ``behavior_builder``-- function which accpet
+	 - ``behavior_builder``-- function which accept
 	 the arguments: host_name, component_name.
 	  (ex: mk_tree_fsm(this.host_name, this.name))
 	 This is used here as a builder since We need
@@ -38,6 +38,7 @@ class BehaviorComponent{
     }
 
     // some kind of reducer here:    
+    // used for mk, rm methods
     apply(action_name, args){
 	
 	events.emit(this.host_name+".ActionsQueue", {
@@ -59,6 +60,10 @@ class CoreComponent{
     /*Frame+Behavior*/
 
     constructor({name, frame, behavior}){
+	/*
+	 - ``behavior`` -- should have mk, rm methods
+	 see: BehaviorComponent
+	 */
 	this.name = behavior.name;
 
 	this.frame = frame;
@@ -72,10 +77,10 @@ class CoreComponent{
 	
 	// events.emit(this.name+".mk_tree", {fargs: {tree: this.tree}});
 	// TODO:
-	this.behavior.apply("mk", {frame: this.frame});
+	this.behavior.apply("mk."+this.name, {frame: this.frame});
     }
     rm(){
-	this.behavior.apply("rm");
+	this.behavior.apply("rm."+this.name);
 	this.behavior.exit();
     }
 }
@@ -113,7 +118,7 @@ function InnerComponent({element_builder, name, host_name, data, actions,
 
     const storage = useRef(); // storage_id
     const [ready, set_ready] = useState(false);
-
+    
     // on init/exit
     useEffect(()=>{
 
@@ -141,25 +146,33 @@ function InnerComponent({element_builder, name, host_name, data, actions,
 	    {
 		// TODO: this code seems never used
 		console.log("RELOADING: calling comp.current.reload_container");
-		comp_ref.current.frame.reload_container();
+		// comp_ref.current.rm();
+		
+
+		// comp_ref.current.mk({});
+		// comp_ref.current.frame.reload_container();
 	    }
 
 	return ()=>{
 	    console.log("EXITING: calling comp.current.rm_comp");
 	    comp_ref.current.rm();
+
+	    // for ISSUE::hide/show: this will force to reinitiate the comp when
+	    // the data being changed:
+	    comp_ref.current = false;
 	};
-    }, []);
+	// for ISSUE::hide/show: this will update wrapped when data being changed:
+    }, [data]);
 
     // ISSUE: this is not realy necessary since update happend
-    // by vActions
-    // on comp_data update
+    // on fsm event now
+    // 
     /*
     useEffect(()=>{
-	events.emit(host_name+".update.exit", {
-	    // TODO generalize name:
-	    fargs: {tree_data: data}});
+	events.emit("update."+name+".ActionsQueue", {
+	    fargs: {data: data}});
     }, [data]);
-    */
+     */
     return(<div>
 
 	   <div ref={el=>storage.current = el}
@@ -171,34 +184,104 @@ function InnerComponent({element_builder, name, host_name, data, actions,
 
 // dict to store what have been spawned
 var spawned = {};
+// var counter = 0;
+
+function useShowHook(){}
 
 function OuterComponent(options){
-    const [show, set_show] = useState(true);
+    /*Used for show/hide behavior i.e. it define  `show.${options.name}`
+     and `hide.${options.name}` events which could be called outside
+     with use of eHandler:
+     
+     // Example:
+    // hide first then reopen again:
+    events.emit("hide."+editor_name, {
+	on_done:(trace)=>{
+	    events.emit("show."+editor_name,{fargs:{data: {
+		tabs_ids: ["parser"],
+		tabs_contents: [data.node.title],
+		field_tags: ["math"]}}});
+	}});
+
+     And also having 
+ 	    vActions = <FsmActionsViewer behavior = {behavior}/>;
+	    vCurrentState = <FsmCurrentStateViewer
+    components which will be shown
+
+     if params show_state, show_actions was given in options
+     */
+
+    const [show, set_show] = useState(options.hasOwnProperty("show")?options.show:true);
+
+    // this is necessary for FsmActionsViewer and FsmCurrentStateViewer:
     const [behavior, set_behavior] = useState();
+
+    // for show:
+    const [data, set_data] = useState(options.data);
 
     let core = <div/>;
     let vActions = <div/>;
     let vCurrentState = <div/>;
 
-    // if someone emit `show."comp_name"` it will be show/hide
+    // if someone emit `show."comp_name"` with data given,
+    // it will show/update editor
     useEffect(()=>{
-	function handler(options){
+	function handler_show(hoptions){
 	    // console.log("OuterComponent: calling handler: show", show);
-	    spawned[behavior.name] = (spawned.hasOwnProperty(behavior.name))?!spawned[behavior.name]:false;
+	    // spawned[behavior.name] = true;
+	    // spawned[behavior.name] = (spawned.hasOwnProperty(behavior.name))?!spawned[behavior.name]:false;
+	    console.log("ISSUE::show: hoptions:", hoptions);
+	    if(hoptions.args.hasOwnProperty("data")){
+		// ISSUE: v0: in this version data should be updated
+		// on InnerComponent param and its useEffect
+		set_data(hoptions.args.data);
+		
+		// ISSUE: v1 for this method to use it required that
+		// the fsm support "update."+options.name effect
+		// (see: editor/behavior.js::mk_editor_fsm)
+		
+		// v1.0
+		// events.emit(options.host_name+".ActionsQueue", {
+		//    fargs:{action:"update."+options.name, input:{data:hoptions.args.data}}});
+		// v1.1
+		// behavior.apply("update."+options.name, {data:hoptions.args.data})		
+	    }
 	    // console.log("OuterComponent: calling handler: show", show);
 	    // console.log("OuterComponent: calling handler: spawned", spawned);
-	    set_show(spawned[behavior.name]);	    
+	    // counter = counter+1;
+	    set_show(true);
+	    // set_show(spawned[behavior.name]);	    
 	}
 
-	if(behavior)
-	    events.on(`show.`+behavior.name, handler, {idd: behavior.idd});
+	function handler_hide(hoptions){
+	    // spawned[behavior.name] = false;
+	    // counter = 0;
+	    // set_data(false);
+	    set_show(false);
+	    // set_show(spawned[behavior.name]);	    
+	}
+
+	//if(behavior){
+	    events.on(`show.`+options.name, handler_show,
+		      {
+			  idd:`show.`+options.name// behavior.idd
+		      });
+	    events.on(`hide.`+options.name, handler_hide, {idd: `hide.`+options.name});
+	//}
 	return ()=>{
-	    if(behavior)
-		if(events.has(`show.`+behavior.name))
-		    events.off(`show.`+behavior.name, {idd: behavior.idd});
+	   // if(behavior){
+		if(events.has(`show.`+options.name)){
+		    events.off(`show.`+options.name,
+			       {idd: `show.`+options.name});
+		}
+		if(events.has(`hide.`+options.name)){
+		    events.off(`hide.`+options.name, {idd: `hide.`+options.name});
+		}
+		
+	//    }
 		//events.off(handler);
 	};
-    }, [behavior]);
+    }, []);
     /*
     useEffect(()=>{
 	return ()=>{
@@ -210,8 +293,14 @@ function OuterComponent(options){
     }, []);
      */
     if(show){
+	// when behavior is ready:
 	let args = {...options,
 		    on_behavior_loaded: ({behavior})=>set_behavior(behavior)};
+
+	// update the data if its be given by show:
+	if(data)
+	    args = {...args, data: data};
+
 	core = <InnerComponent {...args} />;
 
 	if(options.show_actions)

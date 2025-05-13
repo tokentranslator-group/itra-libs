@@ -12,7 +12,24 @@ function mk_host_as_state(host_name){
 	state_name: "Server",
 
 	actions: {
-	    "add.enter": (self, input)=>{
+	    "save.enter": (self, input)=>{
+		console.log("HostEmulator: save.enter:input:" , input);
+		// simulating the server:
+		const entry ={
+		    tabs_ids: ["parser", "out"],
+		    tabs_contents: ["HostEmulator simulated save result", "4"],
+		    field_tags: ["math"]};
+
+		// the data having been updated, call to everyone:
+		events.emit(host_name+".ActionsQueue", {
+		    fargs: {action: "save.exit", input:{data: entry}},
+		    on_done: (trace)=>{
+			console.log("HostEmulator: save.exit done");
+		    }});
+
+	    },
+
+	    "add.tree.enter": (self, input)=>{
 		// simulating the server:
 		var node = {"title": input.node_name, "folder": false};
 		
@@ -20,7 +37,7 @@ function mk_host_as_state(host_name){
 		
 		// data having been updated, call to everyone:
 		events.emit(host_name+".ActionsQueue", {
-		    fargs: {action: "add.exit", input:{node: node}},
+		    fargs: {action: "add.tree.exit", input:{node: node}},
 		    on_done: (trace)=>{
 			console.log("HostEmulator: add.exit done");
 		    }});

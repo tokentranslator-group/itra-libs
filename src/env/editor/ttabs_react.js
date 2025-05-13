@@ -2,14 +2,35 @@ import React from 'react';
 import {useState, useEffect, useRef} from 'react';
 import ReactDOM from 'react-dom';
 
-import {Editor} from './ttabs_helpers.js';
+import {mk_core_comp_for_editor_fsm_v1} from './ttabs_helpers.js';
+import {OuterComponent} from '../react_wrapper.js';
 
 
+function EditorComponent({name, host_name, core_comp_builder, data, actions, show}){
+    return(
+	    <OuterComponent
+	name={name}
+    
+	host_name={host_name}
+
+	element_builder = {(options)=>core_comp_builder(options)}
+	data={data}
+	actions={actions}
+	
+	show_actions={true}
+	show_state={true}
+	show={show}
+	    />
+    );
+}
+
+/*
+// DEPRICATED:
 function EditorComponent({name, host_name, data, actions}){
-    /*
+    *
      - ``tree_wrapper_id`` - id to use for component wrapper.
      Must not exist yet.
-     */
+     *
     const editor = useRef();
     const storage = useRef();
     const [state, set_state] = useState(data);
@@ -57,5 +78,5 @@ function EditorComponent({name, host_name, data, actions}){
 	   style={{"borderWidth": "1px",
 		   "borderColor":"black"}}>This is react wrapper for an editor</div>);
 }
-
+*/
 export{EditorComponent}

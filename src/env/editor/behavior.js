@@ -1,21 +1,115 @@
 import {events} from 'itra-behavior/src/eHandler.js';
 
-import {mk_node} from 'itra-behavior/src/type_classes/fsm/behaviors/helpers.js';
+import {mk_node, mk_idle_state} from 'itra-behavior/src/type_classes/fsm/behaviors/helpers.js';
 
-// this is an communicator/router between fsm and viewers:
-function mk_editor_fsm(host_name){
+
+
+
+function mk_editor_fsm(host_name, name){
+    // TODO: generalize both editor and tree top/root node/fsm:
+    var state_events = {};
+    state_events["mk."+name] = {
+	stack_name: "ActionsQueue",
+	callback: (self, input)=>{
+	    console.log("NODE::FSM: mk being called");
+	    // update editor for each state:
+	    Object.entries(self.states).forEach((state)=>{
+		state[1].editor = input.frame;
+	    });
+	    self.editor = input.frame;
+	    self.editor.create_tabs();
+	}
+    };
+
+    state_events["rm."+name] = {
+	stack_name: "ActionsQueue",
+	callback: (self, input)=>{
+	    self.editor.remove();
+	}
+    };
+
+    // This is only for v1 update mechanism
+    // which is currently not used: see react_wrapper.js:OuterComponent
+    state_events["update."+name] = {
+	stack_name: "ActionsQueue",
+	callback: (self, input)=>{
+	    console.log("ISSUE show ::FSM on "+"update."+name+":input", input);
+	    // self.editor.remove();
+	    if(input.hasOwnProperty("data"))
+		self.editor.load(input.data);
+	    // self.editor.create_tabs();
+	}
+    };
+
     return mk_node({
-	node_name: "Editor",
+	node_name: name,
 	host_name: host_name,
 	
-	stacks_names: ["IOQueue", "ActionsQueue"],
+	stacks_names: ["ActionsQueue"],
 
+	protocols:{
+	    on:(self, input)=>{
+		console.log("NODE::FSM: on: call editor.create_tabs");
+		// self.editor.create_tabs();
+	    },
+	    off:(self, input)=>{
+		console.log("NODE::FSM: off: call editor.remove");
+		// self.editor.remove();
+	    }
+	},
+
+	events:state_events,
+
+	actions: {
+	    done: {from: "*", to: "Idle"},
+	    save: {from: "Idle", to: "Saving"}
+	},
+
+	init_state_name: "Idle",
+	states:[
+	    {
+		name: "Saving",
+		builder: (parent_name)=>mk_saving_state(parent_name)
+	    },
+	    {
+		name: "Idle",
+		builder: (parent_name)=>mk_idle_state(parent_name)
+	    }
+	]
+    });
+
+}
+
+
+function mk_saving_state(host_name){
+    return mk_node({
+	host_name: host_name,
+	node_name: "Saving",
 	
-
+	protocols:{
+	    on:(self, input)=>{
+		let data = self.editor.save();
+		events.emit(host_name+".ActionsQueue", ({fargs:{
+		    action: "save.enter", input: {data: data}}}));
+	    }
+	},
+	
+	events:{
+	    "save.exit":{
+		// no need for prent_name here
+		stack_name:"ActionsQueue",
+		callback: (self, input)=>{
+		    self.editor.load(input.data);
+		}
+	    }
+	}
     });
 }
 
+// DEPRICATED:
 /* The Root of the tree behavior */
+/*
+// this is an communicator/router between fsm and viewers:
 class EditorBehavior{
     constructor({host_name, name}){
 	this.host_name = host_name;
@@ -60,5 +154,5 @@ class EditorBehavior{
 	// this.host_fsm.off();
     }
 }
-
-export{EditorBehavior}
+*/
+export{mk_editor_fsm}

@@ -47,7 +47,7 @@ function mk_tree_fsm(host_name, state_name){
 		    console.log("NODE::TreeFsm.ActionsQueue: reciving action:", action_name);
 		    switch(action_name){
 			
-		    case "mk":
+		    case "mk."+state_name:
 			// update tree for each state:
 			Object.entries(self.states).forEach((state)=>{
 			    
@@ -57,7 +57,7 @@ function mk_tree_fsm(host_name, state_name){
 			self.tree = input.frame;
 			break;
 			
-		    case "rm": self.tree.rm_tree();
+		    case "rm."+state_name: self.tree.rm_tree();
 			break;
 		    }	    
 		}
@@ -80,7 +80,7 @@ function mk_tree_fsm(host_name, state_name){
 
 		    actions: {
 			
-			"add.exit":(self, input)=>{
+			"add.tree.exit":(self, input)=>{
 			    console.log("NODE::ACTIONS:Tree:Adding add node tree after add.exit, with input:", input);
 			    let node = input.node;
 			    self.tree.add_node(node);	
@@ -102,7 +102,7 @@ function mk_tree_fsm(host_name, state_name){
 			    
 			    self.tree.menu.input.create_input(x, y, (node_name)=>{
 				events.emit(host_name+".ActionsQueue", ({fargs:{
-				    action: "add.enter", input: {node_name: node_name}}}));
+				    action: "add.tree.enter", input: {node_name: node_name}}}));
 			    });
 			}}
 		})
