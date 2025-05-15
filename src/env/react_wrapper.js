@@ -186,42 +186,10 @@ function InnerComponent({element_builder, name, host_name, data, actions,
 var spawned = {};
 // var counter = 0;
 
-function useShowHook(){}
 
-function OuterComponent(options){
-    /*Used for show/hide behavior i.e. it define  `show.${options.name}`
-     and `hide.${options.name}` events which could be called outside
-     with use of eHandler:
-     
-     // Example:
-    // hide first then reopen again:
-    events.emit("hide."+editor_name, {
-	on_done:(trace)=>{
-	    events.emit("show."+editor_name,{fargs:{data: {
-		tabs_ids: ["parser"],
-		tabs_contents: [data.node.title],
-		field_tags: ["math"]}}});
-	}});
-
-     And also having 
- 	    vActions = <FsmActionsViewer behavior = {behavior}/>;
-	    vCurrentState = <FsmCurrentStateViewer
-    components which will be shown
-
-     if params show_state, show_actions was given in options
-     */
-
-    const [show, set_show] = useState(options.hasOwnProperty("show")?options.show:true);
-
-    // this is necessary for FsmActionsViewer and FsmCurrentStateViewer:
-    const [behavior, set_behavior] = useState();
-
-    // for show:
-    const [data, set_data] = useState(options.data);
-
-    let core = <div/>;
-    let vActions = <div/>;
-    let vCurrentState = <div/>;
+function useShowHook({name, init_data, show}){
+    const [_show, set_show] = useState(show);
+    const [data, set_data] = useState(init_data);
 
     // if someone emit `show."comp_name"` with data given,
     // it will show/update editor
@@ -262,20 +230,20 @@ function OuterComponent(options){
 	}
 
 	//if(behavior){
-	    events.on(`show.`+options.name, handler_show,
+	    events.on(`show.`+name, handler_show,
 		      {
-			  idd:`show.`+options.name// behavior.idd
+			  idd:`show.`+name// behavior.idd
 		      });
-	    events.on(`hide.`+options.name, handler_hide, {idd: `hide.`+options.name});
+	    events.on(`hide.`+name, handler_hide, {idd: `hide.`+name});
 	//}
 	return ()=>{
 	   // if(behavior){
-		if(events.has(`show.`+options.name)){
-		    events.off(`show.`+options.name,
-			       {idd: `show.`+options.name});
+		if(events.has(`show.`+name)){
+		    events.off(`show.`+name,
+			       {idd: `show.`+name});
 		}
-		if(events.has(`hide.`+options.name)){
-		    events.off(`hide.`+options.name, {idd: `hide.`+options.name});
+		if(events.has(`hide.`+name)){
+		    events.off(`hide.`+name, {idd: `hide.`+name});
 		}
 		
 	//    }
@@ -292,6 +260,48 @@ function OuterComponent(options){
 	};
     }, []);
      */
+    return [_show, data];
+}
+
+function OuterComponent(options){
+    /*Used for show/hide behavior i.e. it define  `show.${options.name}`
+     and `hide.${options.name}` events which could be called outside
+     with use of eHandler:
+     
+     // Example:
+    // hide first then reopen again:
+    events.emit("hide."+editor_name, {
+	on_done:(trace)=>{
+	    events.emit("show."+editor_name,{fargs:{data: {
+		tabs_ids: ["parser"],
+		tabs_contents: [data.node.title],
+		field_tags: ["math"]}}});
+	}});
+
+     And also having 
+ 	    vActions = <FsmActionsViewer behavior = {behavior}/>;
+	    vCurrentState = <FsmCurrentStateViewer
+    components which will be shown
+
+     if params show_state, show_actions was given in options
+     */
+
+    const [show, data] = useShowHook({
+	name: options.name,
+	show:options.hasOwnProperty("show")?options.show:true,
+	init_data: options.data
+    });
+    console.log("ISSUE: show: show, data", [show, data]);
+    // this is necessary for FsmActionsViewer and FsmCurrentStateViewer:
+    const [behavior, set_behavior] = useState();
+
+    // for show:
+    // const [data, set_data] = useState(options.data);
+
+    let core = <div/>;
+    let vActions = <div/>;
+    let vCurrentState = <div/>;
+
     if(show){
 	// when behavior is ready:
 	let args = {...options,

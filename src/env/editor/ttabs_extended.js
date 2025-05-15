@@ -5,6 +5,8 @@ import * as ui from 'jquery-ui';
 
 import 'jquery-ui/ui/widgets/tabs';
 import 'jquery-ui/ui/widgets/dialog';
+import 'jquery-ui/ui/widgets/resizable';
+import 'jquery-ui/ui/widgets/draggable';
 
 import {Tabs} from './ttabs.js';
 import {Tags} from '../ttags.js';
@@ -143,6 +145,8 @@ ETabs.prototype.create_tabs = function(){
     };
     self.tags.apply_tags(tags_succ);
     // END FOR
+
+    $("#"+self.div_id).draggable({handle: "p.ui-widget-header"});
 };
 
 // FOR dynamic tabs:

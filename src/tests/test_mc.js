@@ -26,6 +26,7 @@ function test_mc(){
 
 	    <p> OuterComponent:</p>
 
+	    <div style={{position:"absolute", width: "20%", height: "50%"}}>
 	    <TreeComponent 
 	name={tree_name}	
 	host_name={host_name}
@@ -82,7 +83,10 @@ function test_mc(){
 		}
 	    }}}
 	    />
-	    
+	    </div>
+
+	    <div style={{position:"absolute", buttom:"10%", top: "10%", left:"50%", width: "30%", height: "100px"}}>
+
 	    <EditorComponent
 	name={editor_name}
 	host_name={host_name}
@@ -115,7 +119,7 @@ function test_mc(){
 	]}}
 	show={false}
 	    />;
-	
+	</div>
 	    </div>
     );
 }

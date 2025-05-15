@@ -6,6 +6,8 @@ import * as ui from 'jquery-ui';
 import 'jquery-ui/ui/widgets/dialog';
 import 'jquery-ui/ui/widgets/tabs';
 
+import 'jquery-ui/ui/widgets/resizable';
+import 'jquery-ui/ui/widgets/draggable';
 // import {MathJax} from "./MathJax/MathJax.js";
 
 /*
@@ -454,8 +456,10 @@ Tabs.prototype.create_tabs = function(){
 
     self.draw_tabs_content();
 
-    $("#"+self.get_tabs_id()).tabs();
-    // $(div_id).draggable({handle: "p.ui-widget-header"});
+    // $("#"+self.get_tabs_id()).tabs();
+    
+    // $("#"+self.get_dialog_id()).draggable({handle: "p.ui-widget-header"});
+    // $("#"+self.div_id).draggable({handle: "p.ui-widget-header"});
     /// $("#to_parse_div").css("width", "350");
     /// $("#to_parse_div").css("height", "50");
     
