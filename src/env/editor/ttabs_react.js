@@ -13,7 +13,7 @@ function EditorComponent({name, host_name, core_comp_builder, data, actions, sho
     
 	host_name={host_name}
 
-	element_builder = {(options)=>core_comp_builder(options)}
+	core_comp_builder = {(options)=>core_comp_builder(options)}
 	data={data}
 	actions={actions}
 	

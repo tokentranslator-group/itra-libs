@@ -124,7 +124,7 @@ ETabs.prototype.create_tabs = function(){
     board_str += self.tags.draw_tags();
     
     // for add dialog div:
-    board_str += self.draw_dialog(self.get_dialog_id(), self.get_dialog_editor_id());
+    // board_str += self.draw_dialog(self.get_dialog_id(), self.get_dialog_editor_id());
 
     $("#"+self.div_id).html(board_str);
     $("#"+self.get_field_tags_storage_id()).tooltip();
@@ -145,9 +145,11 @@ ETabs.prototype.create_tabs = function(){
     };
     self.tags.apply_tags(tags_succ);
     // END FOR
-
+    // console.log("ttabs.div_id:", self.div_id);
     $("#"+self.div_id).draggable({handle: "p.ui-widget-header"});
+    // $("#"+self.div_id).css({position: "absolute"});
 };
+
 
 // FOR dynamic tabs:
 ETabs.prototype.get_buttons_id = function(){

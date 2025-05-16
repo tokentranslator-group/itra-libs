@@ -526,6 +526,9 @@ Tabs.prototype.create_dialog_callback = function(tab_content_text_div_id, dialog
 	var subdiv_id = "#"+dialog_id;
 	// var subdiv_id = "#edit_" + subdiv_name + "_input";
 	
+	const dialog_str = self.draw_dialog(self.get_dialog_id(), self.get_dialog_editor_id());
+	$("#"+self.div_id).append(dialog_str);
+
 	$(subdiv_id).dialog({
 	    resizable: true,
 	    height: 400,
@@ -577,7 +580,7 @@ Tabs.prototype.create_dialog_callback = function(tab_content_text_div_id, dialog
 		    console.log("dialog closed");
 		$(subdiv_id).toggleClass("ui-widget ui-corner-all ui-widget-shadow style_editor_dinamic");
 		$("#"+dialog_editor_id).toggleClass("ui-widget-content ui-corner-all");
-		
+		$("#"+self.get_dialog_id()).remove();
 	    },
 	    buttons: {
 		"Edit": self.dialog_edit_callback(tab_content_text_div_id, dialog_editor_id),

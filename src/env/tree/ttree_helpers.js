@@ -31,6 +31,13 @@ function mk_tree_frame({storage_ref, name, host_name, data, actions}){
 	    actions["activate"](event, data);
 	},
 
+	// TODO: 15.05.2025: emit(selected, data:{selected})
+	selector: (selected)=>{
+	    console.log(name+" selected:", selected);
+	    events.emit(host_name+".ActionsQueue", {fargs: {
+		action: "selected", input:selected}});
+	},
+
 	menu_items: actions.menu.items,
 	menu_tooltips: actions.menu.tooltips,
 	menu_callbacks: actions.menu.callbacks

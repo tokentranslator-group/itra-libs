@@ -87,6 +87,7 @@ function Tree(options){
 
     // FOR activate:
     self.activator = options["activator"];
+    self.selector = options["selector"];
     // END FOR
 
     // FOR menu:
@@ -603,6 +604,13 @@ Tree.prototype.create_tree = function(init_data){
 	    mode: "hide"       // "dimm" Grayout unmatched nodes (pass "hide" to remove unmatched node instead)
 	},
 
+	select:  function(event, data){
+	    var selected = $.map(data.tree.getSelectedNodes(), function(node){
+		return node.toDict();
+            });
+	    if(self.hasOwnProperty("selector"))
+		self.selector(selected);
+	},
 
 	activate: function(event, data){
 	    if(self.dbg){

@@ -56,8 +56,6 @@ function test_mc(){
 		    tabs_contents: [data.node.title],
 		    field_tags: ["math"]}}});
 		 //   }});
-		
-		
 	    },
 	    //TODO: data_update: (),
 	    menu:{
@@ -67,7 +65,9 @@ function test_mc(){
 		
 		// keys here must be equal to ``menu_items``:
 		callbacks: {
-		    "join": ()=>events.emit(tree_name+".join", {}),
+		    "join": ()=>events.emit("show.joiner",{
+			fargs:{data: {}}}),
+
 		    "add": ()=>{
 			console.log("add...");
 			events.emit(host_name+".ActionsQueue",

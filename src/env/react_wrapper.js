@@ -104,10 +104,10 @@ function mk_core_comp_v1(frame_builder,  behavior_builder, options){
 }
 
 
-function InnerComponent({element_builder, name, host_name, data, actions,
+function InnerComponent({core_comp_builder, name, host_name, data, actions,
 			 on_behavior_loaded}){
     /*
-     - ``element_builder`` - CoreComponent builder.
+     - ``core_comp_builder`` - CoreComponent builder.
      
      - ``on_behavior_loaded`` - called when behavior will be initiated.
      take component.behavior.core as behavior arg.
@@ -122,7 +122,7 @@ function InnerComponent({element_builder, name, host_name, data, actions,
     // on init/exit
     useEffect(()=>{
 
-	const comp = element_builder({
+	const comp = core_comp_builder({
 	    name: name,
 	    host_name: host_name,
 	    storage_ref: storage.current,
@@ -188,6 +188,24 @@ var spawned = {};
 
 
 function useShowHook({name, init_data, show}){
+    /*Used to spawn a component, which use this hook, or close it.
+     On spawn if `args.data` given in the msg, it will be
+     returned back to the component.
+
+     Used for show/hide behavior i.e. it define  `show.${options.name}`
+     and `hide.${options.name}` events which could be called outside
+     with use of eHandler:
+     
+     // Example:
+    // hide first then reopen again:
+    events.emit("hide."+editor_name, {
+	on_done:(trace)=>{
+	    events.emit("show."+editor_name,{fargs:{data: {
+		tabs_ids: ["parser"],
+		tabs_contents: [data.node.title],
+		field_tags: ["math"]}}});
+	}});
+     */
     const [_show, set_show] = useState(show);
     const [data, set_data] = useState(init_data);
 
@@ -264,25 +282,15 @@ function useShowHook({name, init_data, show}){
 }
 
 function OuterComponent(options){
-    /*Used for show/hide behavior i.e. it define  `show.${options.name}`
-     and `hide.${options.name}` events which could be called outside
-     with use of eHandler:
+    /* This component use the useShowHook to show/hide itself
+     on according events. In case of showing/spawning if
+     the data having been given in the msg (and hence returned back by useShowHook)
+     then the component.InnerComponent.Core.frame will be reinitiated with this data. 
      
-     // Example:
-    // hide first then reopen again:
-    events.emit("hide."+editor_name, {
-	on_done:(trace)=>{
-	    events.emit("show."+editor_name,{fargs:{data: {
-		tabs_ids: ["parser"],
-		tabs_contents: [data.node.title],
-		field_tags: ["math"]}}});
-	}});
-
      And also having 
  	    vActions = <FsmActionsViewer behavior = {behavior}/>;
 	    vCurrentState = <FsmCurrentStateViewer
     components which will be shown
-
      if params show_state, show_actions was given in options
      */
 
