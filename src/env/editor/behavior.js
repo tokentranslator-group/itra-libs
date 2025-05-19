@@ -61,7 +61,8 @@ function mk_editor_fsm(host_name, name){
 	events:state_events,
 
 	actions: {
-	    "editor.done": {from: "*", to: "Idle"},
+	    "save.exit": {from: "Saving", to: "Idle"},
+	    // "editor.done": {from: "*", to: "Idle"},
 	    save: {from: "Idle", to: "Saving"}
 	},
 
@@ -89,26 +90,32 @@ function mk_saving_state(host_name){
 	protocols:{
 	    on:(self, input)=>{
 		let data = self.editor.save();
-		
+
+		// ISSUE: Host some how should be given automatically
 		events.emit("Host.ActionsQueue", ({
 		    fargs:{
-			action: "save.enter", input: {data: data}},
-		    on_done: (trace)=>console.log("Editor.Saving.save.enter done:", host_name+".ActionsQueue")}));
+			action: "save.enter", input: {data: data}}
+		}));
+		
+	    },
+	    
+	    off:(self, input)=>{
+		self.editor.load(input.data);
 	    }
 	},
-	
+	/*
 	events:{
 	    "save.exit":{
 		// no need for prent_name here
 		stack_name:"ActionsQueue",
 		callback: (self, input)=>{
-		    self.editor.load(input.data);
+	
 		    console.log("========Editor.Saving.save.exit========");
 		    events.emit("Host"+".ActionsQueue", ({fargs:{
 			action: "editor.done"}}));
 		}
 	    }
-	}
+	}*/
     });
 }
 
