@@ -354,10 +354,6 @@ function OuterComponent(options){
 	   {vCurrentState}
 
 	   <br/>
-	   <button onClick={()=>{
-	       console.log(events);
-	   events.show_observers();
-	   events.show_delayed();}}>eHandler</button>
 	   </div>
 	  );
     

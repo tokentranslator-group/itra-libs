@@ -1,5 +1,5 @@
 import {events} from 'itra-behavior/src/eHandler.js';
-import {mk_fsm, mk_state, mk_state_ActionsQueue} from 'itra-behavior/src/type_classes/fsm/behaviors/helpers.js';
+import {mk_node, mk_fsm, mk_state, mk_state_ActionsQueue} from 'itra-behavior/src/type_classes/fsm/behaviors/helpers.js';
 import {IO as IOBase} from './TreeEdp.js';
 
 // import {mk_host_as_state} from '../../host/host_emulator.js';
@@ -136,6 +136,18 @@ function mk_tree_fsm(host_name, state_name){
 			}
 		    }
 		})
+	    },
+
+	    {
+		name: "Joining",
+		builder: (parent_name)=> mk_node({
+		    host_name: parent_name,
+		    node_name: "Joining",
+		    protocols: {
+		    	on:(self, input)=>{}
+		    }
+		})
+		
 	    },
 
 	    {

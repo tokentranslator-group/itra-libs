@@ -61,7 +61,7 @@ function mk_editor_fsm(host_name, name){
 	events:state_events,
 
 	actions: {
-	    done: {from: "*", to: "Idle"},
+	    "editor.done": {from: "*", to: "Idle"},
 	    save: {from: "Idle", to: "Saving"}
 	},
 
@@ -89,8 +89,11 @@ function mk_saving_state(host_name){
 	protocols:{
 	    on:(self, input)=>{
 		let data = self.editor.save();
-		events.emit(host_name+".ActionsQueue", ({fargs:{
-		    action: "save.enter", input: {data: data}}}));
+		
+		events.emit("Host.ActionsQueue", ({
+		    fargs:{
+			action: "save.enter", input: {data: data}},
+		    on_done: (trace)=>console.log("Editor.Saving.save.enter done:", host_name+".ActionsQueue")}));
 	    }
 	},
 	
@@ -100,6 +103,9 @@ function mk_saving_state(host_name){
 		stack_name:"ActionsQueue",
 		callback: (self, input)=>{
 		    self.editor.load(input.data);
+		    console.log("========Editor.Saving.save.exit========");
+		    events.emit("Host"+".ActionsQueue", ({fargs:{
+			action: "editor.done"}}));
 		}
 	    }
 	}

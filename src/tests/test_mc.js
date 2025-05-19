@@ -107,7 +107,7 @@ function test_mc(){
 		    (e)=>{
 			console.log("Editor.save");
 			events.emit(host_name+".ActionsQueue",
-				    {fargs: {action: "save.enter",
+				    {fargs: {action: "save",
 					    input: _self.data}});
 
 		    },
@@ -119,6 +119,15 @@ function test_mc(){
 	]}}
 	show={false}
 	    />;
+	
+	    <button onClick={()=>{
+		console.log(events);
+		events.show_observers();
+		events.show_delayed();}}>eHandler</button>
+	    <button onClick={()=>{
+		
+		events.emit("query:dbg", {fargs:{}});}}>Fsm dbg</button>
+
 	</div>
 	    </div>
     );

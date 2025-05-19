@@ -106,7 +106,7 @@ function Tabs(options){
     // self.net = net;
     options || (options = {});
     self.dbg = options.dbg || false;
-    self.dbg = true;
+    
     if(self.dbg)
 	console.log("options = ", options);
 
