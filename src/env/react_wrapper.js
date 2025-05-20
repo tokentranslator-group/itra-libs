@@ -2,7 +2,7 @@ import React from 'react';
 import {useState, useEffect, useRef} from 'react';
 import ReactDOM from 'react-dom';
 
-import {FsmActionsViewer, FsmCurrentStateViewer} from 'itra-behavior/src/type_classes/fsm/views/helpers.js';
+import {FsmActionsViewer, FsmCurrentStateViewer, useEdpHook} from 'itra-behavior/src/type_classes/fsm/views/helpers.js';
 
 import {events} from 'itra-behavior/src/eHandler.js';
 
@@ -186,6 +186,25 @@ function InnerComponent({core_comp_builder, name, host_name, data, actions,
 var spawned = {};
 // var counter = 0;
 
+function useShowHook1({name, init_data, show}){
+    const [_show, set_show] = useState(show);
+    
+    const levents = {};
+    levents["show."+name]= (args)=>{
+	set_show(true);
+	return args.data;};
+    levents["hide."+name] = (args)=>{
+	set_show(false);
+	return {};};
+
+    let init = {};
+    init["show."+name] = init_data;
+    init["hide."+name] = {};
+    let data = useEdpHook(levents, init, "show/hide."+name);
+    console.log("SHOW:", data);
+    // return data.show since it is only case when we needed it:
+    return [_show, data["show."+name]];
+}
 
 function useShowHook({name, init_data, show}){
     /*Used to spawn a component, which use this hook, or close it.
@@ -294,7 +313,7 @@ function OuterComponent(options){
      if params show_state, show_actions was given in options
      */
 
-    const [show, data] = useShowHook({
+    const [show, data] = useShowHook1({
 	name: options.name,
 	show:options.hasOwnProperty("show")?options.show:true,
 	init_data: options.data
