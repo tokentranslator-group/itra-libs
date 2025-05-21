@@ -13,6 +13,9 @@ import {EditorComponent} from '../env/editor/ttabs_react.js';
 // import {mk_editor_fsm} from '../env/editor/behavior.js';
 import {mk_core_comp_for_editor_fsm_v1} from '../env/editor/ttabs_helpers.js';
 
+import {Joiner} from '../env/joiner/joiner_react.js';
+
+
 const host_name = "Host";
 const tree_name = "LTree";
 const editor_name = "Editor";
@@ -65,7 +68,7 @@ function test_mc(){
 		
 		// keys here must be equal to ``menu_items``:
 		callbacks: {
-		    "join": ()=>events.emit("show.joiner",{
+		    "join": ()=>events.emit("join",{
 			fargs:{data: {}}}),
 
 		    "add": ()=>{
@@ -119,7 +122,8 @@ function test_mc(){
 	]}}
 	show={false}
 	    />;
-	
+	    <Joiner host_name={host_name}/>
+
 	    <button onClick={()=>{
 		console.log(events);
 		events.show_observers();

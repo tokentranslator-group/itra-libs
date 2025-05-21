@@ -16,7 +16,8 @@ function mk_tree_fsm(host_name, state_name){
 	actions:{
 	    
 	    done: {from: "*", to: "Idle"},
-	    join: {from: "Idle", to: "Joining"},
+	    "join.exit": {from: "Joining", to: "Idle"},
+	    "join": {from: "Idle", to: "Joining"},
 	    add: {from: "Idle", to: "Adding"},
 	    update: {from: "Idle", to: "Updating"}
 	},
@@ -138,13 +139,36 @@ function mk_tree_fsm(host_name, state_name){
 		})
 	    },
 
+	    // Note the usage of mk_node here
+	    // and protocols only scheme (events used only for deselection):
 	    {
 		name: "Joining",
 		builder: (parent_name)=> mk_node({
 		    host_name: parent_name,
 		    node_name: "Joining",
+		    
+		    stacks_names: ["ActionsQueue"],
+		    
+		    events: {deselect:{
+			stack_name: "ActionsQueue",
+			callback: (self, input)=>{
+			    self.tree.deselect();
+			}
+		    }},
+
 		    protocols: {
-		    	on:(self, input)=>{}
+		    	on:(self, input)=>{
+			    events.emit("show."+"Joiner",{
+				fargs:{data: {
+				    selected: self.tree.get_selected()}}
+				//on_done: (trace)=>self.tree.deselect()
+			    });
+			},
+			off:(self, input)=>{
+			    let tree_data = input.tree_data;
+			    console.log("NODE::ACTIONS:Joining: updating tree after join.exit: input", input);
+			    self.tree.update_tree(tree_data);
+			}
 		    }
 		})
 		

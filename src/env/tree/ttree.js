@@ -458,6 +458,15 @@ Tree.prototype.check_node_unique = function(parent_node, name){
 };
 
 
+Tree.prototype.get_selected = function(){
+    return this.$(this.storage.tree_div_id).fancytree("getTree").getSelectedNodes();     
+};
+
+Tree.prototype.deselect = function(){
+    this.$(this.storage.tree_div_id).fancytree("getTree").selectAll(false);     
+};
+
+
 Tree.prototype.remove_selected_node = function(check_empty){
 	       
     /*.*/

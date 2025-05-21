@@ -186,10 +186,36 @@ function InnerComponent({core_comp_builder, name, host_name, data, actions,
 var spawned = {};
 // var counter = 0;
 
-function useShowHook1({name, init_data, show}){
+function useEdpSpawnable({name, levents, init_data, show}){
+    /*Extended useEdpHook with ability to spawn a component, which used this hook, or close it.
+     On spawn if `args.data` given in the msg, it will be
+     returned back to the component.
+
+     Used for show/hide behavior i.e. it define  `show.${options.name}`
+     and `hide.${options.name}` events which could be called outside
+     with use of eHandler:
+     
+     // Example:
+    // hide first then reopen again:
+    events.emit("hide."+editor_name, {
+	on_done:(trace)=>{
+	    events.emit("show."+editor_name,{fargs:{data: {
+		tabs_ids: ["parser"],
+		tabs_contents: [data.node.title],
+		field_tags: ["math"]}}});
+	}});
+
+     init_data used when created first time if default given
+     show option is true.
+
+     - ``levents`` -- Same as for useEdpHook i.e {ename: callback(args~fargs)}
+
+     */
+
     const [_show, set_show] = useState(show);
-    
-    const levents = {};
+
+    levents = levents?levents:{};
+
     levents["show."+name]= (args)=>{
 	set_show(true);
 	return args.data;};
@@ -203,7 +229,8 @@ function useShowHook1({name, init_data, show}){
     let data = useEdpHook(levents, init, "show/hide."+name);
     console.log("SHOW:", data);
     // return data.show since it is only case when we needed it:
-    return [_show, data["show."+name]];
+    return [_show, data];
+    // return [_show, data["show."+name]];
 }
 
 function useShowHook({name, init_data, show}){
@@ -275,11 +302,11 @@ function useShowHook({name, init_data, show}){
 	//}
 	return ()=>{
 	   // if(behavior){
-		if(events.has(`show.`+name)){
+		if(events.has(`show.`+name, {idd:`show.`+name})){
 		    events.off(`show.`+name,
 			       {idd: `show.`+name});
 		}
-		if(events.has(`hide.`+name)){
+		if(events.has(`hide.`+name, {idd: `hide.`+name})){
 		    events.off(`hide.`+name, {idd: `hide.`+name});
 		}
 		
@@ -292,7 +319,7 @@ function useShowHook({name, init_data, show}){
 	return ()=>{
 	    console.log("OuterComponent: exiting: events", events);
 	    if(behavior)
-		if(events.has(`show.`+behavior.name))
+		if(events.has(`show.`+behavior.name, {idd: behavior.idd}))
 		    events.off(`show.`+behavior.name, {idd: behavior.idd});
 	};
     }, []);
@@ -313,7 +340,7 @@ function OuterComponent(options){
      if params show_state, show_actions was given in options
      */
 
-    const [show, data] = useShowHook1({
+    const [show, data] = useEdpSpawnable({
 	name: options.name,
 	show:options.hasOwnProperty("show")?options.show:true,
 	init_data: options.data
@@ -336,7 +363,7 @@ function OuterComponent(options){
 
 	// update the data if its be given by show:
 	if(data)
-	    args = {...args, data: data};
+	    args = {...args, data: data["show."+options.name]};
 
 	core = <InnerComponent {...args} />;
 

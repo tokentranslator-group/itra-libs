@@ -69,13 +69,21 @@ function mk_host_as_state(host_name){
 
 	    // TODO:
 	    "join.enter": (self, input)=>{
-	    	let parent = input.parent;
-		let children = input.children;
+	    	let parent = input.destination;
+		let children = input.source;
 		
 		console.log("NODE::Server.join.enter: joining on server...");
 		// data having been updated, call to everyone:
 		events.emit(host_name+".ActionsQueue",  {
-		    fargs: {action:".join.exit", tree_data:{}},
+		    fargs: {
+			action:"join.exit",
+			input:{
+			    tree_data:{
+				children:[{
+				    title: "joined done",
+				    key: "1",
+				    folder: true,
+				    children: children}]}}},
 		    on_done: (trace)=>{
 			console.log("HostEmulator: join.exit done");
 		    }});
