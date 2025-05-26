@@ -25,6 +25,10 @@ function TreeComponent({name, host_name, core_comp_builder, data, actions}){
 	
 	show_actions={true}
 	show_state={true}
+
+	draggable={false}
+	resizable={true}
+	
 	    />
     );
 }

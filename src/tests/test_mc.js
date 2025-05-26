@@ -32,15 +32,8 @@ function test_mc(){
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(
 	    <div>
-	    <div style={{
-		position:"absolute",
-		
-		top: "10%", left:"30%", width: "20%",
-		border: "1px solid",
-		"border-color": "black"
-		
-	    }}>
-	    <p>Query db:</p>
+	    <div >
+	    
 	    <Querier host_name={host_name}
 	on_selected={(elm)=>{
 		events.emit("show."+editor_name,{fargs:{data: {
@@ -115,7 +108,15 @@ function test_mc(){
 		    "save": ()=>console.log("saving...")
 		}
 	    }}}
+
 	    />
+	    </div>
+
+	    <div style={{ top: "10%", left:"10%", width: "50%", height: "70px",
+			  "z-index": 1,
+			  position: "absolute"
+			}}>
+	    <Joiner host_name={host_name}/>
 	    </div>
 
 	    <div style={{position:"absolute", top: "10%", left:"60%", width: "50%", height: "70px"}}>
@@ -152,12 +153,7 @@ function test_mc(){
 	]}}
 	show={false}
 	    />;
-	    <div style={{ top: "10%", left:"6%", width: "50%", height: "70px"
-			 
-			}}>
-	    <Joiner host_name={host_name}/>
-	    </div>
-
+	    
 	    <button onClick={()=>{
 		console.log(events);
 		events.show_observers();
@@ -176,7 +172,6 @@ function test_mc(){
 		"border-color": "black"
 		
 	    }}>
-	    <p>Host Emulator:</p>
 	    <HostComponent host_fsm={get_host_emulator()}
 	    />
 	    </div>

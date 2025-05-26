@@ -86,7 +86,7 @@ export function Joiner({host_name}){
 
     if(show)
 	return(<div ref={el} className={"style_editor_dinamic editor_overflow"}>
-	       <p>State: {state.toString()}</p>
+	       <p> {name} State: {state.toString()}</p>
 	       <p>Source</p>
 	       <ul>
 	       {LeftPanel}

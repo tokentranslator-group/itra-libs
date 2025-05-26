@@ -20,6 +20,10 @@ function EditorComponent({name, host_name, core_comp_builder, data, actions, sho
 	show_actions={true}
 	show_state={true}
 	show={show}
+
+	draggable={true}
+	resizable={true}
+
 	    />
     );
 }

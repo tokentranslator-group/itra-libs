@@ -98,7 +98,15 @@ export function Querier({host_name, on_selected, on_deselected}){
 		>{elm.title}</li>;
 	});
     
-    return(<div ref={el} className={"style_editor_dinamic editor_overflow"}>
+    return(<div ref={el} className={"style_editor_dinamic editor_overflow"}
+	   style={{
+		position:"absolute",
+		"z-index": 1,
+		top: "10%", left:"23%", width: "30%",
+		border: "1px solid",
+		"border-color": "black"
+		
+	    }}>
 	   <p>Query</p>
 	   <input onChange={(e)=>set_query(e.target.value)}
 	   style={{

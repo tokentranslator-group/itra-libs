@@ -8,6 +8,14 @@ import {events} from 'itra-behavior/src/eHandler.js';
 
 import {throw_error, check} from './helpers.js';
 
+import $ from 'jquery';
+import * as ui from 'jquery-ui';
+
+// import 'jquery-ui/ui/widgets/tabs';
+//import 'jquery-ui/ui/widgets/dialog';
+import 'jquery-ui/ui/widgets/resizable';
+import 'jquery-ui/ui/widgets/draggable';
+
 
 /* The Root of the tree behavior */
 class BehaviorComponent{
@@ -339,6 +347,17 @@ function OuterComponent(options){
     components which will be shown
      if params show_state, show_actions was given in options
      */
+    const el = useRef();
+
+    useEffect(()=>{
+	console.log("Querier: making resizable", el.current);
+	if(el.current!==undefined){
+	    if(options.draggable)
+		$(el.current).draggable();
+	    if(options.resizable)
+		$(el.current).resizable();
+	}
+    }, []);
 
     const [show, data] = useEdpSpawnable({
 	name: options.name,
@@ -387,8 +406,8 @@ function OuterComponent(options){
 		   action: "mk_tree", input: {tree:"test mk_tree"}}})}>mk_tree</button><br/>
 
      */
-    return(<div>
-	    <p>Wrapper show: {show.toString()}</p>
+    return(<div ref={el} className={"style_editor_dinamic editor_overflow"}>
+	    <p>Wrapper {options.name} show: {show.toString()}</p>
 	   <br/>
 	   
 	   {core}
