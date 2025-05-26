@@ -67,7 +67,6 @@ function mk_host_as_state(host_name){
 		    }});
 	    },
 
-	    // TODO:
 	    "join.enter": (self, input)=>{
 	    	let parent = input.destination;
 		let children = input.source;
@@ -87,7 +86,29 @@ function mk_host_as_state(host_name){
 		    on_done: (trace)=>{
 			console.log("HostEmulator: join.exit done");
 		    }});
+	    },
+	    
+	    "fetch.enter": (self, input)=>{
+	    	let query = input.query;
+				
+		console.log("NODE::Server.fetch.enter: fetching from server...");
+		
+		// data having been updated, call to everyone:
+		events.emit(host_name+".ActionsQueue",  {
+		    fargs: {
+			action:"fetch.exit",
+			input:{
+			    entries:[
+				{title: query+" fetched 1", key: "1"},
+				{title: query+" fetched 2", key: "2"},
+				{title: query+" fetched 3", key: "3"}
+			    ]}},
+
+		    on_done: (trace)=>{
+			console.log("HostEmulator: fetch.exit done");
+		    }});
 	    }
+
 	}
     });
     return host_fsm;

@@ -4,6 +4,14 @@ import ReactDOM from 'react-dom';
 
 import {events} from 'itra-behavior/src/eHandler.js';
 
+import $ from 'jquery';
+import * as ui from 'jquery-ui';
+
+// import 'jquery-ui/ui/widgets/tabs';
+//import 'jquery-ui/ui/widgets/dialog';
+import 'jquery-ui/ui/widgets/resizable';
+import 'jquery-ui/ui/widgets/draggable';
+
 
 export function Joiner({host_name}){
     /*Left panel is a source one.
@@ -11,11 +19,21 @@ export function Joiner({host_name}){
      On spawning the given selected will be put to the left panel*/
     const name = "Joiner";
     const [show, set_show] = useState(false);
+
+    const el = useRef();
     
     var [state, set_state] = useState(true);
     const [left_selected, set_left_selected] = useState([]);
     const [right_selected, set_right_selected] = useState([]);
     
+    useEffect(()=>{
+	console.log("Joiner: making resizable", el.current);
+	if(el.current!==undefined){
+	    $(el.current).draggable();
+	    $(el.current).resizable();
+	}
+    }, [show]);
+
     // show/hide from edp:
     useEffect(()=>{
 	events.on(`show.`+name, ({event_type, args, trace})=>{
@@ -67,7 +85,7 @@ export function Joiner({host_name}){
     let RightPanel = right_selected.map((elm, idx)=><li key={idx.toString()}>{elm.title}</li>);
 
     if(show)
-	return(<div>
+	return(<div ref={el} className={"style_editor_dinamic editor_overflow"}>
 	       <p>State: {state.toString()}</p>
 	       <p>Source</p>
 	       <ul>

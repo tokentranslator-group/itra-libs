@@ -2,6 +2,11 @@ import React from 'react';
 import {useState, useEffect, useRef} from 'react';
 import ReactDOM from 'react-dom';
 
+import * as css from '../css/styles.css';
+import * as css1 from '../css/tabs.css';
+import * as css2 from '../css/dialog.css';
+import * as css3 from '../css/all.css';
+
 import {events} from 'itra-behavior/src/eHandler.js';
 
 import {mk_core_comp_for_tree_fsm_v1} from '../env/tree/ttree_helpers.js';
@@ -16,6 +21,9 @@ import {mk_core_comp_for_editor_fsm_v1} from '../env/editor/ttabs_helpers.js';
 import {Joiner} from '../env/joiner/joiner_react.js';
 
 
+import {Querier} from '../env/querier/querier_react.js';
+
+
 const host_name = "Host";
 const tree_name = "LTree";
 const editor_name = "Editor";
@@ -24,12 +32,33 @@ function test_mc(){
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(
 	    <div>
-	    <p>Host Emulator:</p>
-	    <HostComponent host_fsm={get_host_emulator()}/>
+	    <div style={{
+		position:"absolute",
+		
+		top: "10%", left:"30%", width: "20%",
+		border: "1px solid",
+		"border-color": "black"
+		
+	    }}>
+	    <p>Query db:</p>
+	    <Querier host_name={host_name}
+	on_selected={(elm)=>{
+		events.emit("show."+editor_name,{fargs:{data: {
+		    tabs_ids: ["parser"],
+		    tabs_contents: [elm.title],
+		    field_tags: ["math"]}}});
+	    }}
+	on_deselected={(elm)=>{
+	    events.emit("hide."+editor_name, {});
+	}}
+	    />
+	    </div>
 
-	    <p> OuterComponent:</p>
+	    <p> Tree:</p>
 
-	    <div style={{position:"absolute", width: "20%", height: "50%"}}>
+	    <div style={{position:"absolute", width: "20%", height: "50%",
+			 border: "1px solid"
+			}}>
 	    <TreeComponent 
 	name={tree_name}	
 	host_name={host_name}
@@ -51,6 +80,7 @@ function test_mc(){
 	    activate: (event, data) => {
 		console.log("clicked on: ", data.node.title);
 		
+		// spawn editor:
 		// hide first then reopen again:
 		// events.emit("hide."+editor_name, {
 		//    on_done:(trace)=>{
@@ -88,7 +118,7 @@ function test_mc(){
 	    />
 	    </div>
 
-	    <div style={{position:"absolute", buttom:"10%", top: "10%", left:"50%", width: "30%", height: "100px"}}>
+	    <div style={{position:"absolute", top: "10%", left:"60%", width: "50%", height: "70px"}}>
 
 	    <EditorComponent
 	name={editor_name}
@@ -122,7 +152,11 @@ function test_mc(){
 	]}}
 	show={false}
 	    />;
+	    <div style={{ top: "10%", left:"6%", width: "50%", height: "70px"
+			 
+			}}>
 	    <Joiner host_name={host_name}/>
+	    </div>
 
 	    <button onClick={()=>{
 		console.log(events);
@@ -132,7 +166,20 @@ function test_mc(){
 		
 		events.emit("query:dbg", {fargs:{}});}}>Fsm dbg</button>
 
-	</div>
+	    </div>
+	    <div style={{
+		position:"absolute",
+		
+		top: "150%", left:"1%", width: "100%",
+		hight: "50%",
+		border: "1px solid",
+		"border-color": "black"
+		
+	    }}>
+	    <p>Host Emulator:</p>
+	    <HostComponent host_fsm={get_host_emulator()}
+	    />
+	    </div>
 	    </div>
     );
 }
