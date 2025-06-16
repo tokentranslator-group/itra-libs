@@ -25,7 +25,7 @@ export function get_host_emulator(){
 	    }
 	};
     };
-    host_fsm.on();
+    // host_fsm.on();
     return host_fsm;
 }
 

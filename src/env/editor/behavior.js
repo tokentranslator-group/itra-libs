@@ -8,6 +8,8 @@ import {mk_node, mk_idle_state} from 'itra-behavior/src/type_classes/fsm/behavio
 function mk_editor_fsm(host_name, name){
     // TODO: generalize both editor and tree top/root node/fsm:
     var state_events = {};
+    
+    // this will be used in the BehaviorComponent.apply for wrapper_react:
     state_events["mk."+name] = {
 	stack_name: "ActionsQueue",
 	callback: (self, input)=>{

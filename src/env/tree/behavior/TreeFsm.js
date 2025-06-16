@@ -102,6 +102,7 @@ function mk_tree_fsm(host_name, state_name){
 			    // var y = self.tree.menu.offset[1];
 			    
 			    self.tree.menu.input.create_input(x, y, (node_name)=>{
+				// TODO: input.on_succ(data)
 				events.emit(host_name+".ActionsQueue", ({fargs:{
 				    action: "add.tree.enter", input: {node_name: node_name}}}));
 			    });
@@ -119,6 +120,8 @@ function mk_tree_fsm(host_name, state_name){
 
 		    actions: {
 			"update.tree.exit": (self, input)=>{
+			    // TODO: input.on_succ(data)
+
 			    let tree_data = input.tree_data;
 			    console.log("NODE::ACTIONS:Updating:ActionsQueue updating tree after update.exit: input", input);
 			    
@@ -132,6 +135,13 @@ function mk_tree_fsm(host_name, state_name){
 		    protocols:{
 			on: (self, input)=>{
 			    console.log("NODE::PROTOCOLS:Updating:on update.enter");
+			    // TODO: input.on_succ(data, input)
+			    //  inside which the Host will emit("exit", input)
+			    // and so input will arrive on State.update.tree.exit
+			    // handler where it could be called
+			    // or Just register them all in some event stack
+			    // so they could be called one after another 
+			    // with some trace.msg
 			    events.emit(host_name+".ActionsQueue",  {fargs:{
 				action: "update.tree.enter", input: {url:"url"}}});
 			}
@@ -158,6 +168,7 @@ function mk_tree_fsm(host_name, state_name){
 
 		    protocols: {
 		    	on:(self, input)=>{
+			    // TODO: input.on_succ(data)
 			    events.emit("show."+"Joiner",{
 				fargs:{data: {
 				    selected: self.tree.get_selected()}}

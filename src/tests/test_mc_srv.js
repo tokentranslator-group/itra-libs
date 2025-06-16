@@ -24,36 +24,51 @@ import {Joiner} from '../env/joiner/joiner_react.js';
 import {Querier} from '../env/querier/querier_react.js';
 
 
-const host_name = "Host";
+const host_name = "GraphDb";
+const service_name = "graph_db";
 const tree_name = "LTree";
 const editor_name = "Editor";
 
-function test_mc(){
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(
-	    <div>
-	    <div >
-	    
-	    <Querier host_name={host_name}
-	on_selected={(elm)=>{
-		events.emit("show."+editor_name,{fargs:{data: {
-		    tabs_ids: ["parser"],
-		    tabs_contents: [elm.title],
-		    field_tags: ["math"]}}});
-	    }}
-	on_deselected={(elm)=>{
-	    events.emit("hide."+editor_name, {});
-	}}
-	    />
-	    </div>
 
-	    <p> Tree:</p>
+function TestMc(){
+    useEffect(()=>{
+	// TODO: to separate test:
+	function cont(data){
+	    events.emit("show."+tree_name, {
+		fargs:{data:{
+		    children: [{
+			title: "data_from_show", key: "1", folder: true,
+			children: [{title: "tokens path", key: "2"}]}]}}});
+	}
+	function cont1(){
+	    events.on(host_name+".ActionsQueue",
+		      ({event_type, args, trace})=>{
+			  if(args.input.action=="gets"){
+			  if(args.input.data.length>0)
+			      // use recived data here
+			      cont(args.input.data);
+			  else{
+			      // create root and try again:
+			      // unsubscibe
+			      events.off({idd: "fetch_kb"});
 
-	    <div style={{position:"absolute", width: "20%", height: "50%",
-			 border: "1px solid"
-			}}>
-
-	    <TreeComponent 
+			      // subscribe to mk_node to trigger
+			      // self again:
+			      host.on(mk_nodes, cont1());
+			      // emit mk_node do above 
+			      host.emit.mk_nodes({"title": "root"});
+			      
+			  }
+			  
+		      }
+		      
+		      host.emit.gets;
+		  }, {idd:"fetch_kb"});
+	
+	}
+    },[]);
+    return(
+    	    <TreeComponent 
 	name={tree_name}	
 	host_name={host_name}
 	core_comp_builder={(options)=>mk_core_comp_for_tree_fsm_v1(options)}
@@ -110,77 +125,16 @@ function test_mc(){
 		}
 	    }}}
 
-	    />
-	    </div>
-
-	    <div style={{ top: "10%", left:"10%", width: "50%", height: "70px",
-			  "z-index": 1,
-			  position: "absolute"
-			}}>
-	    <Joiner host_name={host_name}/>
-	    </div>
-
-	    <div style={{position:"absolute", top: "10%", left:"60%", width: "50%", height: "70px"}}>
-
-	    <EditorComponent
-	name={editor_name}
-	host_name={host_name}
-	core_comp_builder={(options)=>{
-	    console.log("ISSUE:show/hidecore_comp_builder : options:", options);
-	    return mk_core_comp_for_editor_fsm_v1(options);}}
-	data={{
-	    tabs_ids: ["parser", "out"],
-	    tabs_contents: ["2+2", "4"],
-	    field_tags: ["math"]}}
-	
-	actions={{
-	
-	    // TODO: unite to dict:
-	    buttons_names: ["save", "close"],
-	    tabs_buttons_callbacks:[
-		(tab_id, tab_content_text_id, _self)=>
-		    (e)=>{
-			console.log("Editor.save");
-			events.emit(host_name+".ActionsQueue",
-				    {fargs: {action: "save",
-					    input: _self.data}});
-
-		    },
-		(tab_id, tab_content_text_id, _self)=>
-		    (e)=>{
-			console.log("Editor.close");
-			events.emit("hide."+editor_name, {});
-		    }	    	    
-	]}}
-	show={false}
-	    />;
-	    
-	    <button onClick={()=>{
-		console.log(events);
-		events.show_observers();
-		events.show_delayed();}}>eHandler</button>
-	    <button onClick={()=>{
-		
-		events.emit("query:dbg", {fargs:{}});}}>Fsm dbg</button>
-
-	    </div>
-	    <div style={{
-		position:"absolute",
-		
-		top: "150%", left:"1%", width: "100%",
-		hight: "50%",
-		border: "1px solid",
-		"border-color": "black"
-		
-	    }}>
-	    <HostComponent host_fsm={get_host_emulator()}
-	    />
-	    </div>
-	    </div>
-    );
+	    />);
 }
 
 
 export function main(){
-    test_mc();
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(
+	    <div>
+	    <TestMc/>
+	    </div>
+    );
+
 }

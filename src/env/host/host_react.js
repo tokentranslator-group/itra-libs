@@ -9,13 +9,19 @@ import {events} from 'itra-behavior/src/eHandler.js';
 
 function HostComponent({host_fsm}){
     const ref = useRef(host_fsm);
+
+    useEffect(()=>{
+	host_fsm.on();
+	return ()=>host_fsm.off();
+    }, []);
+
     // ISSUE: the FsmCurrentStateViewer will not going to work here since 
     // host_fsm is not actually fsm but state!
     return(<div className={"style_editor_dinamic editor_overflow"}
 	   style={{
 		position:"absolute",
-		"z-index": 1,
-		top: "70%", left:"2%", width: "70%",
+		// "zIndex": 1,
+		top: "170%", left:"30%", width: "70%",
 		border: "1px solid",
 		"border-color": "black"
 		
