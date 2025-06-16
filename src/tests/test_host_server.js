@@ -7,22 +7,26 @@ import {events} from 'itra-behavior/src/eHandler.js';
 import {FsmCurrentStateViewer, useEdpHook} from 'itra-behavior/src/type_classes/fsm/views/helpers.js';
 
 import {HostComponent} from '../env/host/host_react.js';
-import {mk_host_server, ServiceReducer} from  '../env/host/host_server.js';
+import {mk_host_server, ServiceReducer,$_db_handler, sim_db_handler} from  '../env/host/host_server.js';
 
 
 const host_name = "GraphDb";
 const service_name = "graph_db";
 
 
-export function get_host(){
-    let host_fsm = mk_host_server(host_name, service_name, "http://localhost:8888/");
+export function get_host(db_handler){
+    let host_fsm = mk_host_server({
+	host_name: host_name,
+	service_name: service_name,
+	url: "http://localhost:8888/",
+	db_handler: db_handler});
 
     // no need since HostComponent use useEffect now:
     // host_fsm.on();
     return host_fsm;
 }
 
-function TestComponent(){
+function TestComponent({db_handler}){
     const reducer = new ServiceReducer({
 	host_name: host_name,
 	service_name: service_name});
@@ -43,7 +47,7 @@ function TestComponent(){
     return(
 	    <div>
 	    <p>Testing Host Emulator:</p>
-	    <HostComponent host_fsm={get_host()}/>
+	    <HostComponent host_fsm={get_host(db_handler)}/>
 	    <br/>
 
 	    <button onClick={()=>{
@@ -89,5 +93,6 @@ function TestComponent(){
 
 export function main(){
     const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<TestComponent/>);
+    root.render(<TestComponent db_handler={sim_db_handler}/>);
+    // root.render(<TestComponent db_handler={$_db_handler}/>);
 }

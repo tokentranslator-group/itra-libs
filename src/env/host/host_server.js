@@ -2,7 +2,19 @@ import {events} from 'itra-behavior/src/eHandler.js';
 import {mk_node, mk_idle_state} from 'itra-behavior/src/type_classes/fsm/behaviors/helpers.js';
 import $ from 'jquery';
 
-function $_get_data({url, to_send, succ, dbg}){
+function sim_db_handler({url, to_send, succ, dbg}){
+    /*This simulator will just call succ with 
+     the `to_send.service.action.args` as the returning data*/
+    console.log("sim_db_handler: to_send:", to_send);
+    let service_name = to_send["service"]["name"];
+    let action = to_send["service"]["action"];
+    let action_name = action.name;
+    let action_args = action.args;
+    succ(action_args);
+}
+
+
+function $_db_handler({url, to_send, succ, dbg}){
     dbg = dbg?dbg:true;
     $.ajax(
 	{
@@ -67,8 +79,33 @@ class ServiceReducer{
 }
 
 
-function mk_host_server(host_name, service_name, url){
+function mk_host_server({host_name, service_name, url, db_handler}){
     /*
+     - ``db_handler`` -- used to call the host.
+     As default (i.e. when not given) the `$_db_handler` will be used.
+     
+     If given, should looks as follows:
+
+     signature: (url, to_send, succ)
+
+     where:
+
+     - ``to_send::Dict`` -- following will be given to it:
+     {
+       service: {
+   	 name: service_name,
+	 action: {
+	     name: input.action,
+	     args: input.args
+	 }
+     }} 
+
+     - ``succ:(data)->None`` -- should be called after action
+     having been performed and the data succesfully arrived.
+
+     # See `$_db_handler` for more. 
+
+
     // example of usage:
     events.emit(host_name+".ActionsQueue", {
 	fargs:{
@@ -84,8 +121,33 @@ function mk_host_server(host_name, service_name, url){
 	    }
 	}});
 
+
      # REF: test_host_server.js
+    
+    // to catch it from some other state use:
+    mk_node(){
+	events: {
+	    (service_name+".exit"):{
+		stack_name: "ActionsQueue",
+		callback: (self, input)=>{
+		    // use input.data here:
+		    // as recived one
+		    // ...
+		}
+	    }
+	}
+    }
+
+    // or just from edp:
+    events.on(host_name+".ActionsQueue",
+	      ({event_type, args, trace})=>{
+		  if(args.input.action=="some_action")
+		      // use recived data here
+		      some_func(args.input.data);
+	      });
      */
+
+    db_handler = (db_handler==undefined)?$_db_handler:db_handler;
 
     let main_actions = {};
     main_actions[service_name+".enter"] = {from: "Idle", to:"Waiting"};
@@ -115,7 +177,7 @@ function mk_host_server(host_name, service_name, url){
 			on:(self, input)=>{
 			    console.log("SVR: getting data");
 			    
-			    $_get_data({
+			    db_handler({
 				url,
 				to_send:{
 				    
@@ -143,29 +205,6 @@ function mk_host_server(host_name, service_name, url){
 						data: data
 					    }}
 				    });
-				    // to catch it from some other state use:
-				    /*
-				    mk_node(){
-				     events: {
-					(service_name+".exit"):{
-					    stack_name: "ActionsQueue",
-					    callback: (self, input)=>{
-					       // use input.data here:
-				               // as recived one
-				               // ...
-					    }
-					}
-				      }
-				     }
-
-				     // or just from edp:
-				    events.on(host_name+".ActionsQueue",
-					      ({event_type, args, trace})=>{
-						  if(args.input.action=="some_action")
-				                      // use recived data here
-						      some_func(args.input.data);
-					      });
-				     */
 				}});
 			    // not working:
 			    // get_data(url, service_name, input);
@@ -217,5 +256,5 @@ async function get_data(url, service_name, input){
    
 }
 
-export{mk_host_server, ServiceReducer}
+export{mk_host_server, ServiceReducer, $_db_handler, sim_db_handler}
 
