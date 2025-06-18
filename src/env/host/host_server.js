@@ -192,8 +192,16 @@ function mk_host_server({host_name, service_name, url, db_handler}){
 				    
 				    console.log("SVR: "+host_name+" data returned:", data);
 				    
-				    if(input.on_succ!==undefined)
-					input.on_succ(data);
+				    // # ISSUE:
+				    // with this soulution if reducer being called
+				    // sequentially the state will not be
+				    // leaved when the other call happend
+				    // and so nothing will hapend.
+				    // Ehandler also not detect 
+				    // because the state stack is differ from
+				    // fsm one:
+				    // if(input.on_succ!==undefined)
+				    //   input.on_succ(data);
 
 				    // switch self to idle
 				    // and send data to others:
@@ -203,7 +211,13 @@ function mk_host_server({host_name, service_name, url, db_handler}){
 					    input:{
 						action: input.action,
 						data: data
-					    }}
+					    }},
+					on_done: (trace)=>{
+					    // this should work though:
+					    if(input.on_succ!==undefined)
+						input.on_succ(data);
+
+					}
 				    });
 				}});
 			    // not working:

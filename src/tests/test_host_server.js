@@ -9,6 +9,9 @@ import {FsmCurrentStateViewer, useEdpHook} from 'itra-behavior/src/type_classes/
 import {HostComponent} from '../env/host/host_react.js';
 import {mk_host_server, ServiceReducer,$_db_handler, sim_db_handler} from  '../env/host/host_server.js';
 
+import {apply_tree} from '../env/tree/ttree_helpers.js';
+import {load_root, ls_note, map_to_notes, activate} from './test_hla.js';
+
 
 const host_name = "GraphDb";
 const service_name = "graph_db";
@@ -79,6 +82,28 @@ function TestComponent({db_handler}){
 		reducer.call("ls_tags", {"tags": ["Hello"]}, (data)=>set_data(data));
 	    }}>Test call ls tags "Hello"</button><br/>
 
+	    <p>Tests hla:</p>
+
+	    <button onClick={()=>{
+		reducer.call("ls", {"id": "1"}, (data)=>set_data(data));
+	    }}>Test call ls ("id": "1")</button><br/>
+
+	    <button onClick={()=>{
+		load_root(reducer, (data)=>set_data(apply_tree(data)));
+	    }}>Test load_root</button><br/>
+
+	    <button onClick={()=>{
+		ls_note(reducer, {id:1},(data)=>set_data(apply_tree(data)));
+	    }}>Test ls_note</button><br/>
+
+
+	    <button onClick={()=>{
+		map_to_notes(reducer, [1, 2], (data)=>set_data(data));
+	    }}>map_to_notes</button><br/>
+
+	    <button onClick={()=>{
+		activate(reducer, 1, (data)=>set_data(apply_tree(data)));
+	    }}>activate 1</button><br/>
 
 	    <div>Result:{JSON.stringify(data)}</div><br/>
 
@@ -93,6 +118,6 @@ function TestComponent({db_handler}){
 
 export function main(){
     const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<TestComponent db_handler={sim_db_handler}/>);
-    // root.render(<TestComponent db_handler={$_db_handler}/>);
+    // root.render(<TestComponent db_handler={sim_db_handler}/>);
+    root.render(<TestComponent db_handler={$_db_handler}/>);
 }

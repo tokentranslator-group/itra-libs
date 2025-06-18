@@ -12,7 +12,11 @@ import {events} from 'itra-behavior/src/eHandler.js';
 import {mk_core_comp_for_tree_fsm_v1} from '../env/tree/ttree_helpers.js';
 import {get_host_emulator} from './test_host.js';
 import {HostComponent} from '../env/host/host_react.js';
+import {mk_host_server, ServiceReducer,$_db_handler, sim_db_handler} from  '../env/host/host_server.js';
+import {get_host} from './test_host_server.js';
+
 import {TreeComponent} from '../env/tree/ttree_react.js';
+import {apply_tree} from '../env/tree/ttree_helpers.js';
 
 import {EditorComponent} from '../env/editor/ttabs_react.js';
 // import {mk_editor_fsm} from '../env/editor/behavior.js';
@@ -23,6 +27,7 @@ import {Joiner} from '../env/joiner/joiner_react.js';
 
 import {Querier} from '../env/querier/querier_react.js';
 
+import {load_root} from './test_hla.js';
 
 const host_name = "GraphDb";
 const service_name = "graph_db";
@@ -30,8 +35,13 @@ const tree_name = "LTree";
 const editor_name = "Editor";
 
 
-function TestMc(){
+function TestMc({db_handler}){
+    const [tree_init_data, set_tree_init_data] = useState({});
     useEffect(()=>{
+	
+	load_root((data)=>set_tree_init_data(apply_tree(data)));
+	
+	/*
 	// TODO: to separate test:
 	function cont(data){
 	    events.emit("show."+tree_name, {
@@ -66,29 +76,30 @@ function TestMc(){
 		  }, {idd:"fetch_kb"});
 	
 	}
+	 */
     },[]);
     return(
-    	    <TreeComponent 
+	<>
+	    <HostComponent host_fsm={get_host(db_handler)}/>
+    	    
+	    <TreeComponent 
 	name={tree_name}	
 	host_name={host_name}
 	core_comp_builder={(options)=>mk_core_comp_for_tree_fsm_v1(options)}
 	
-	data={{
-	    title: "available", key: "1", folder: true,
-	    children: [
-		{title: "eqs parser", folder:true, key: "2",
-		 children: [
-		     {title: "tokens path", key: "5"},
-		     {title: "tokens", key: "6"},
-		     {title: "play space", key: "7"},
-		     {title: "db path", key: "8"},
-		     {title: "db", key: "9"}]},
-	    ]}}
+	data={tree_init_data}
 	
 	actions={{
 	    activate: (event, data) => {
 		console.log("clicked on: ", data.node.title);
 		
+		// TODO:
+		// for expanding current node:
+		//data.node.fromDict({
+		//    title: data.node.title,
+		//    children: dict_children["both"]
+		//});
+
 		// spawn editor:
 		// hide first then reopen again:
 		// events.emit("hide."+editor_name, {
@@ -125,7 +136,8 @@ function TestMc(){
 		}
 	    }}}
 
-	    />);
+	    />
+    </>);
 }
 
 
@@ -133,7 +145,7 @@ export function main(){
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(
 	    <div>
-	    <TestMc/>
+	    <TestMc db_handler={sim_db_handler}/>
 	    </div>
     );
 

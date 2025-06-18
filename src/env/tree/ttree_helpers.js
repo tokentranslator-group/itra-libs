@@ -87,6 +87,18 @@ function mk_core_comp_for_tree_fsm(options){
 }
 // END FOR v0
 
+function apply_tree(data){
+    console.log("PROBLEM: apply_tree:data", data);
+    return {children: data.map((note)=>(
+	{...note, title: note.value, folder: note.kind =="folder",
+	 
+
+	 // have to rm them since ambiguity of meanings
+	 children: undefined,
+	 parents: undefined
+	}))};
+}
+
 // TODO:
 function mk_core_comp_for_tree_edp(options){
 }
@@ -170,4 +182,4 @@ function  mk_tree_fsm({storage_ref, name, host_name, data, actions}){
 */
 
 
-export{mk_core_comp_for_tree_edp, mk_core_comp_for_tree_fsm, mk_core_comp_for_tree_fsm_v1}
+export{mk_core_comp_for_tree_edp, mk_core_comp_for_tree_fsm, mk_core_comp_for_tree_fsm_v1, apply_tree}
