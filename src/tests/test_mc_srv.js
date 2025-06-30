@@ -27,7 +27,7 @@ import {Joiner} from '../env/joiner/joiner_react.js';
 
 import {Querier} from '../env/querier/querier_react.js';
 
-import {load_root} from './test_hla.js';
+import {load_root, add, activate} from './test_hla.js';
 
 const host_name = "GraphDb";
 const service_name = "graph_db";
@@ -36,10 +36,21 @@ const editor_name = "Editor";
 
 
 function TestMc({db_handler}){
-    const [tree_init_data, set_tree_init_data] = useState({});
+    const reducer = new ServiceReducer({
+	host_name: host_name,
+	service_name: service_name});
+
+    const [tree_init_data, set_tree_init_data] = useState({children:[{title: "loading..."}]});
     useEffect(()=>{
+
 	
-	load_root((data)=>set_tree_init_data(apply_tree(data)));
+	load_root(reducer, (data)=>{
+	    
+	    	
+	    events.emit("show."+tree_name, {
+		fargs:{data:apply_tree(data)}});
+	
+	});
 	
 	/*
 	// TODO: to separate test:
@@ -78,37 +89,43 @@ function TestMc({db_handler}){
 	}
 	 */
     },[]);
+   
     return(
 	<>
-	    <HostComponent host_fsm={get_host(db_handler)}/>
-    	    
 	    <TreeComponent 
 	name={tree_name}	
 	host_name={host_name}
 	core_comp_builder={(options)=>mk_core_comp_for_tree_fsm_v1(options)}
 	
 	data={tree_init_data}
-	
+	show={false}
 	actions={{
 	    activate: (event, data) => {
-		console.log("clicked on: ", data.node.title);
-		
-		// TODO:
-		// for expanding current node:
-		//data.node.fromDict({
-		//    title: data.node.title,
-		//    children: dict_children["both"]
-		//});
+		console.log("clicked on: ", data.node);
+		let node = data.node.data;
+		console.log("PROBLEM: node:", node);
+		if(node.kind == "folder")
+		    activate(reducer, data.node.data.id, (nodes)=>{
+			console.log("PROBLEM: activate folder nodes:", nodes);
 
-		// spawn editor:
-		// hide first then reopen again:
-		// events.emit("hide."+editor_name, {
-		//    on_done:(trace)=>{
-		events.emit("show."+editor_name,{fargs:{data: {
-		    tabs_ids: ["parser"],
-		    tabs_contents: [data.node.title],
-		    field_tags: ["math"]}}});
-		 //   }});
+			// for expanding current node:
+			data.node.fromDict({
+			    title: data.node.title,
+			    children: apply_tree(nodes).children
+			});	
+		    });
+		else
+
+		    // alert("spawn editor");
+		    // spawn editor:
+		    // hide first then reopen again:
+		    // events.emit("hide."+editor_name, {
+		    //    on_done:(trace)=>{
+		    events.emit("show."+editor_name,{fargs:{data: {
+			tabs_ids: ["body", "kind", "value"],
+			tabs_contents: [node.body, node.kind, node.value],
+			field_tags: [node.tags]}}});
+		//   }});
 	    },
 	    //TODO: data_update: (),
 	    menu:{
@@ -121,10 +138,28 @@ function TestMc({db_handler}){
 		    "join": ()=>events.emit("join",{
 			fargs:{data: {}}}),
 
+		    "mk_folder": ()=>{
+			console.log("adding folder...");
+
+			// last param means folder:
+			add(reducer, (note)=>apply_tree([note]).children[0], true);
+			// events.emit(host_name+".ActionsQueue",
+			//	    {fargs: {action: "add", input:{folder: true}}});
+			// events.emit(tree_name+".add", {});
+		    },
 		    "add": ()=>{
-			console.log("add...");
-			events.emit(host_name+".ActionsQueue",
-				    {fargs: {action: "add"}});
+			console.log("adding...");
+
+			
+			
+			add(reducer,
+			    // transform note to tree format:    
+			    (note)=>apply_tree([note]).children[0],
+
+			    // last param means folder:
+			    false);
+			//events.emit(dhost_name+".ActionsQueue",
+			//	    {fargs: {action: "add", folder: false}});
 			// events.emit(tree_name+".add", {});
 		    },
 		    "load": ()=>{
@@ -137,6 +172,9 @@ function TestMc({db_handler}){
 	    }}}
 
 	    />
+
+	    <HostComponent host_fsm={get_host(db_handler)}/>
+    	    
     </>);
 }
 
@@ -145,7 +183,7 @@ export function main(){
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(
 	    <div>
-	    <TestMc db_handler={sim_db_handler}/>
+	    <TestMc db_handler={$_db_handler}/>
 	    </div>
     );
 

@@ -50,7 +50,7 @@ export function cont01(data, on_succ, root){
 export function add_v1(host_reducer, parent_id, on_succ){
     /*Approach here is similiar to the old itra one:
      call each hla with common res object to forfill
-     Alphough code is clearer - it still not without problems.
+     Although code is clearer - it still not without problems.
      See add_tree_enter desc.
       This approach will not going to work since host_reducer is a fsm 
      which will be in the Waiting state when on_succ will be called.
@@ -121,8 +121,12 @@ function add_tree_enter(){
 }
 
 
-export function add(host_reducer, parent_id, on_succ){
-    
+export function add(host_reducer, apply_tree_for_node, folder){
+    /*
+     - ``apply_tree_for_node`` -- used here to convert result before sending/emitting it to tree
+     */
+    folder = folder==undefined?true:folder;
+
     events.on(stack_name,
 	      ({event_type, args, trace})=>{
 		  if(args.action=="add.tree.enter")
@@ -130,26 +134,28 @@ export function add(host_reducer, parent_id, on_succ){
 		      // create child:
 		      mk_notes(
 			  host_reducer,
-			  [{value: args.input.node_name}],
+			  [{value: args.input.node_name, kind: folder?"folder":"note"}],
 			  (notes_ids)=>{
 			      const child_id = notes_ids[0];
-			      
+
+			      // connect child to parent:
 			      mk_edges(
 				  host_reducer,
-				  [{_from: parent_id, _to:child_id}],
+				  [{_from: args.input.parent_node.id,
+				    _to:child_id}],
 				  (data_edges)=>
 
 				      // get new node obj:
 				      get(
 					  host_reducer, child_id,
-					  (data_get_child)=>
-					      
+					  (data_get_child)=>{
+
 					      // finally:
 					      events.emit(
 						  host_name+".ActionsQueue",
 						  {fargs:{
 						      action:"add.tree.exit",
-						      input: {node: data_get_child}}})
+						      input: {node: apply_tree_for_node(data_get_child)}}});}
 				      ));
 			  });
 		  
@@ -162,21 +168,31 @@ export function add(host_reducer, parent_id, on_succ){
 
 export function load_root(host_reducer, on_succ){
     
-    gets(host_reducer, {value:"root", table_type: "note"}, (data)=>{
-	console.log("PROBLEM: load_root: data", data);
-	if(data.length == 0)
-	    mk_notes(host_reducer, [{value: "root", kind:"folder"}],
-		     // replace all ids with notes:
-		     (notes_ids)=>
-		     map_to_notes(host_reducer, notes_ids, on_succ));
-	else
-	    on_succ(data);
-    });
+    // list root note:
+    gets(host_reducer, {value:"root", table_type: "note"},
+
+	 // succ
+	 (data)=>{
+	     console.log("PROBLEM: load_root: data", data);
+	     if(data.length == 0)
+		 
+		 // create root node if not exist
+		 mk_notes(host_reducer, [{value: "root", kind:"folder"}],
+			  
+			  // replace all ids with notes:
+			  (notes_ids)=>
+			  map_to_notes(host_reducer, notes_ids, on_succ));
+	     else
+		 on_succ(data);
+	 });
 }
 
 
 export function map_to_notes(host_reducer, ids, on_succ, result){
-    /*Reqursive - this is a glimps on how hla could be called sequentially*/
+    /*
+     Call get hla for each index in ids list reqursivelly.  
+     Reqursive - this is a glimps on how hla could be called sequentially*/
+
     result = result==undefined?[]:result;
     if(ids.length>0){
 	let first = ids[0];
@@ -191,17 +207,17 @@ export function map_to_notes(host_reducer, ids, on_succ, result){
 
 export function activate(host_reducer, id, on_succ){
     get(host_reducer, id, (data)=>{
-	if(data.folder)
+	if(data.kind == "folder")
 	    ls_note(host_reducer, id, on_succ);
 	else
-	    on_succ([data]);
+	    throw new Error("tree.activate: only folders supported for expansion!");
     });
 }
 
 // lla-s:
 
-export function ls_note(host_reducer, data, on_succ){
-     host_reducer.call("ls", data, (data)=>{
+export function ls_note(host_reducer, _id, on_succ){
+     host_reducer.call("ls", {id: _id}, (data)=>{
 	 console.log("PROBLEM: ls_note:data", data);
 
 	 // show only forward neighbors:

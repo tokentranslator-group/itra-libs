@@ -75,7 +75,7 @@ function TestComponent({db_handler}){
 	    }}>Test call mk_edges</button><br/>
 
 	    <button onClick={()=>{
-		reducer.call("ls", {"id": "1"}, (data)=>set_data(data));
+		reducer.call("ls", 1, (data)=>set_data(data));
 	    }}>Test call ls ("id": "1")</button><br/>
 
 	    <button onClick={()=>{
@@ -85,7 +85,7 @@ function TestComponent({db_handler}){
 	    <p>Tests hla:</p>
 
 	    <button onClick={()=>{
-		reducer.call("ls", {"id": "1"}, (data)=>set_data(data));
+		reducer.call("ls", 1, (data)=>set_data(data));
 	    }}>Test call ls ("id": "1")</button><br/>
 
 	    <button onClick={()=>{

@@ -94,7 +94,7 @@ function apply_tree(data){
 	 
 
 	 // have to rm them since ambiguity of meanings
-	 children: undefined,
+	 children: [],
 	 parents: undefined
 	}))};
 }

@@ -102,9 +102,16 @@ function mk_tree_fsm(host_name, state_name){
 			    // var y = self.tree.menu.offset[1];
 			    
 			    self.tree.menu.input.create_input(x, y, (node_name)=>{
+				let parent_node = self.tree.get_selected_node();
+				let parents_list = self.tree.get_parents_list(parent_node);
 				// TODO: input.on_succ(data)
 				events.emit(host_name+".ActionsQueue", ({fargs:{
-				    action: "add.tree.enter", input: {node_name: node_name}}}));
+				    action: "add.tree.enter", input: {
+					node_name: node_name,
+	
+					parent_node: parent_node.data,
+					parents_list: parents_list
+				    }}}));
 			    });
 			}}
 		})
