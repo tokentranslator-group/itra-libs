@@ -125,12 +125,17 @@ export function add(host_reducer, apply_tree_for_node, folder){
     /*
      - ``apply_tree_for_node`` -- used here to convert result before sending/emitting it to tree
      */
-    folder = folder==undefined?true:folder;
+    // identifier for this hla subs/unsubs:
+    let hla_idd = "HlaEdpSeq.add";
+    
+    // let hla_action_name = "hla.edp.seq.add";
 
+    folder = folder==undefined?true:folder;
+    console.log("PROBLEM: folder:", folder);
     events.on(stack_name,
 	      ({event_type, args, trace})=>{
 		  if(args.action=="add.tree.enter")
-
+		  
 		      // create child:
 		      mk_notes(
 			  host_reducer,
@@ -153,16 +158,30 @@ export function add(host_reducer, apply_tree_for_node, folder){
 					      // finally:
 					      events.emit(
 						  host_name+".ActionsQueue",
-						  {fargs:{
-						      action:"add.tree.exit",
-						      input: {node: apply_tree_for_node(data_get_child)}}});}
+						  {
+						      fargs:{
+							  action:"add.tree.exit",
+							  input: {node: apply_tree_for_node(data_get_child)}},
+						      
+						      // unsubscribe on complition
+						      on_done: (trace)=>{
+							  if(events.has(host_name+".ActionsQueue", {idd:hla_idd})){
+							      events.off(host_name+".ActionsQueue", {idd:hla_idd});
+							  }
+						      }
+						  });},
+					  
+					  
 				      ));
 			  });
 		  
-	      });
+	      }, {idd: hla_idd});
     
+    // calling tree.add
     events.emit(host_name+".ActionsQueue",
-		{fargs: {action: "add"}});
+		{
+		    fargs: {action: "add"}
+		});
 }
 
 
@@ -243,6 +262,7 @@ function mk_edges(host_reducer, edges_list, on_succ){
 
 // TODO: map to notes:
 function mk_notes(host_reducer, notes_list, on_succ){
+    console.log("PROBLEM: folder notes to create:", notes_list);
     host_reducer.call("mk_notes", {notes: notes_list},
 		      (data)=>on_succ(data["[Id]"]));
 }

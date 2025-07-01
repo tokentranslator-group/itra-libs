@@ -43,52 +43,27 @@ function TestMc({db_handler}){
     const [tree_init_data, set_tree_init_data] = useState({children:[{title: "loading..."}]});
     useEffect(()=>{
 
-	
+	// load data from server and spawn the tree:
 	load_root(reducer, (data)=>{
-	    
 	    	
 	    events.emit("show."+tree_name, {
 		fargs:{data:apply_tree(data)}});
-	
 	});
 	
-	/*
-	// TODO: to separate test:
-	function cont(data){
-	    events.emit("show."+tree_name, {
-		fargs:{data:{
-		    children: [{
-			title: "data_from_show", key: "1", folder: true,
-			children: [{title: "tokens path", key: "2"}]}]}}});
-	}
-	function cont1(){
-	    events.on(host_name+".ActionsQueue",
-		      ({event_type, args, trace})=>{
-			  if(args.input.action=="gets"){
-			  if(args.input.data.length>0)
-			      // use recived data here
-			      cont(args.input.data);
-			  else{
-			      // create root and try again:
-			      // unsubscibe
-			      events.off({idd: "fetch_kb"});
-
-			      // subscribe to mk_node to trigger
-			      // self again:
-			      host.on(mk_nodes, cont1());
-			      // emit mk_node do above 
-			      host.emit.mk_nodes({"title": "root"});
-			      
-			  }
-			  
-		      }
-		      
-		      host.emit.gets;
-		  }, {idd:"fetch_kb"});
-	
-	}
-	 */
     },[]);
+
+
+    useEffect(() => {
+	function handler(e){
+	    if(e.key=="i"){
+		console.log("DBG:PROBLEM:events:", events);
+		events.show_observers();
+	    }
+	}	    
+	window.addEventListener('keyup', handler);
+
+	return () => window.removeEventListener('keyup', handler);
+    }, []); 
    
     return(
 	<>
@@ -130,8 +105,8 @@ function TestMc({db_handler}){
 	    //TODO: data_update: (),
 	    menu:{
 		
-		items: ["join", "add", "load", "save"],
-		tooltips: ["join", "add", "load entry", "rewrite selected model"],
+		items: ["join", "mk_folder", "add", "load", "save"],
+		tooltips: ["join", "mk_folder", "add", "load entry", "rewrite selected model"],
 		
 		// keys here must be equal to ``menu_items``:
 		callbacks: {
@@ -150,8 +125,7 @@ function TestMc({db_handler}){
 		    "add": ()=>{
 			console.log("adding...");
 
-			
-			
+				
 			add(reducer,
 			    // transform note to tree format:    
 			    (note)=>apply_tree([note]).children[0],
