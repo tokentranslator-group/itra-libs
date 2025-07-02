@@ -3,6 +3,7 @@ import {useState, useEffect, useRef} from 'react';
 import ReactDOM from 'react-dom';
 
 import {events} from 'itra-behavior/src/eHandler.js';
+import {unsubscribe} from 'itra-behavior/src/core/dsl/hlaEdpSeq.js';
 
 import {FsmCurrentStateViewer, useEdpHook} from 'itra-behavior/src/type_classes/fsm/views/helpers.js';
 
@@ -191,6 +192,90 @@ function add_tree_enter(){
     return node_name;
 }
 
+
+export function add_seq(host_reducer, apply_tree_for_node, folder){
+    /*Sequential reimplementation of add*/
+
+    let hla_idd = "HlaEdpSeq.add";
+    let idd_idx = 0;
+
+    folder = folder==undefined?true:folder;
+
+    // mk_notes:
+    events.on(stack_name,
+	      ({event_type, args, trace})=>{
+		  if(args.action=="add.tree.enter")
+		  
+		      // create child:
+		      mk_notes(
+			  host_reducer,
+			  [{
+			      value: args.input.node_name,
+			      kind: folder?"folder":"note"}],
+
+			  (notes_ids)=>{
+			      events.emit(hla_idd+0, {
+				  fargs:{
+				      input: args.input,
+				      notes_ids:notes_ids},
+			      on_done: (trace)=>unsubscribe(stack_name, hla_idd)});
+			  });
+	      }, {idd: hla_idd});
+    
+    // mk_edges:
+    events.on(hla_idd+0, ({event_type, args, trace})=>{
+	let notes_ids = args.notes_ids;
+	const child_id = notes_ids[0];
+	
+	// connect child to parent:
+	mk_edges(
+	    host_reducer,
+	    [{_from: args.input.parent_node.id,
+	      _to:child_id}],
+	    (data_edges)=>events.emit(hla_idd+1, {
+		fargs:{data_edges:data_edges, child_id: child_id},
+		on_done: (trace)=>unsubscribe(hla_idd+0, hla_idd)}));
+	    
+    }, {idd: hla_idd});
+
+    // get:
+    events.on(hla_idd+1, ({event_type, args, trace})=>{
+	let data_edges = args.data_edges;
+	const child_id = args.child_id;
+		
+	// get new node obj:
+	get(
+	    host_reducer, child_id,
+	    (data_get_child)=>events.emit(hla_idd+2, {
+		fargs:{data_get_child:data_get_child},
+		on_done: (trace)=>unsubscribe(hla_idd+1, hla_idd)}));
+	    
+    }, {idd: hla_idd});
+
+
+    // finally:
+    events.on(hla_idd+2, ({event_type, args, trace})=>{
+	let data_get_child = args.data_get_child;
+		
+	// finally:
+	events.emit(
+	    host_name+".ActionsQueue",
+	    {
+		fargs:{
+		    action:"add.tree.exit",
+		    input: {node: apply_tree_for_node(data_get_child)}},
+		
+		on_done: (trace)=>unsubscribe(hla_idd+2, hla_idd)
+	    });
+	
+    }, {idd: hla_idd});
+
+    // calling tree.add
+    events.emit(host_name+".ActionsQueue",
+		{
+		    fargs: {action: "add"}
+		});
+}
 
 export function add(host_reducer, apply_tree_for_node, folder){
     /*

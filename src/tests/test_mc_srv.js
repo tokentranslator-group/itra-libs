@@ -27,7 +27,7 @@ import {Joiner} from '../env/joiner/joiner_react.js';
 
 import {Querier} from '../env/querier/querier_react.js';
 
-import {load_root, add, activate, fetch, join} from './test_hla.js';
+import {load_root, add, add_seq, activate, fetch, join} from './test_hla.js';
 
 const host_name = "GraphDb";
 const service_name = "graph_db";
@@ -147,7 +147,9 @@ function TestMc({db_handler}){
 			console.log("adding folder...");
 
 			// last param means folder:
-			add(reducer, (note)=>apply_tree([note]).children[0], true);
+			add_seq(reducer, (note)=>apply_tree([note]).children[0], true);
+			// this also working:
+			// add(reducer, (note)=>apply_tree([note]).children[0], true);
 			// events.emit(host_name+".ActionsQueue",
 			//	    {fargs: {action: "add", input:{folder: true}}});
 			// events.emit(tree_name+".add", {});
