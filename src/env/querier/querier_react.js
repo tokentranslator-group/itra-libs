@@ -101,7 +101,7 @@ export function Querier({host_name, on_selected, on_deselected}){
     return(<div ref={el} className={"style_editor_dinamic editor_overflow"}
 	   style={{
 		position:"absolute",
-		"z-index": 1,
+		"zIndex": 2,
 		top: "10%", left:"23%", width: "30%",
 		border: "1px solid",
 		"border-color": "black"

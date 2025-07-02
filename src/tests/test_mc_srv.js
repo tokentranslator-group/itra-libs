@@ -27,7 +27,7 @@ import {Joiner} from '../env/joiner/joiner_react.js';
 
 import {Querier} from '../env/querier/querier_react.js';
 
-import {load_root, add, activate} from './test_hla.js';
+import {load_root, add, activate, fetch, join} from './test_hla.js';
 
 const host_name = "GraphDb";
 const service_name = "graph_db";
@@ -49,7 +49,12 @@ function TestMc({db_handler}){
 	    events.emit("show."+tree_name, {
 		fargs:{data:apply_tree(data)}});
 	});
-	
+
+	// for querier:
+	fetch(reducer, (data)=>apply_tree(data).children);
+
+	// for joiner:
+	join(reducer, (data)=>apply_tree(data).children);
     },[]);
 
 
@@ -67,6 +72,29 @@ function TestMc({db_handler}){
    
     return(
 	<>
+
+	    <div>
+	    
+	    <Querier host_name={host_name}
+	on_selected={(elm)=>{
+	    events.emit("show."+editor_name,{fargs:{data: {
+		tabs_ids: ["parser"],
+		tabs_contents: [elm.title],
+		field_tags: ["math"]}}});
+	}}
+	on_deselected={(elm)=>{
+	    events.emit("hide."+editor_name, {});
+	}}
+	    />
+	    </div>
+
+	    <div style={{ top: "10%", left:"10%", width: "50%", height: "70px",
+			  "zIndex": 1,
+			  position: "absolute"
+			}}>
+	    <Joiner host_name={host_name}/>
+	    </div>
+	    
 	    <TreeComponent 
 	name={tree_name}	
 	host_name={host_name}
@@ -110,8 +138,10 @@ function TestMc({db_handler}){
 		
 		// keys here must be equal to ``menu_items``:
 		callbacks: {
-		    "join": ()=>events.emit("join",{
-			fargs:{data: {}}}),
+		    "join": ()=>{
+			events.emit(host_name+".ActionsQueue",
+				    {fargs: {action: "join"}});
+		    },
 
 		    "mk_folder": ()=>{
 			console.log("adding folder...");

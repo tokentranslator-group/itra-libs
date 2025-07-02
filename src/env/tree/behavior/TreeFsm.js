@@ -185,7 +185,8 @@ function mk_tree_fsm(host_name, state_name){
 			off:(self, input)=>{
 			    let tree_data = input.tree_data;
 			    console.log("NODE::ACTIONS:Joining: updating tree after join.exit: input", input);
-			    self.tree.update_tree(tree_data);
+			    if(tree_data!==undefined)
+				self.tree.update_tree(tree_data);
 			}
 		    }
 		})

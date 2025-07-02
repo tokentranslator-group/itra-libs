@@ -114,7 +114,7 @@ function test_mc(){
 	    </div>
 
 	    <div style={{ top: "10%", left:"10%", width: "50%", height: "70px",
-			  "z-index": 1,
+			  "zIndex": 1,
 			  position: "absolute"
 			}}>
 	    <Joiner host_name={host_name}/>

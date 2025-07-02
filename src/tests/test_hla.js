@@ -47,6 +47,77 @@ export function cont01(data, on_succ, root){
 }
 
 // hla-s:
+export function join(host_reducer, on_succ){
+    /*
+     Joiner meddiator
+     No need for unregistering since used only once in init*/
+
+    let hla_idd = "HlaEdpSeq.join";
+    events.on(
+	stack_name,
+	({event_type, args, trace})=>{
+	    if(args.action=="join.enter"){
+		// console.log("PROBLEM.Joiner.args:", args);
+		let parents = args.input.destination;
+		let children = args.input.source;
+		// console.log("PROBLEM.Joiner children:", children);
+		let new_edges = parents.reduce(
+		    (acc, parent)=>(
+			[...acc, ...children.map(
+			    (child)=>({
+				_from: parent.data.id,
+				_to: child.data.id}))]), []);
+		// console.log("PROBLEM.Joiner new_edges:", new_edges);
+		mk_edges(
+		    host_reducer,
+		    new_edges,
+		    (data_edges)=>{
+			events.emit(stack_name, {fargs:{
+			    action:"join.exit",
+			    input: {}}});
+		    });	
+	    }
+	}, {idd: hla_idd});
+}
+
+
+export function fetch(host_reducer,on_succ){
+    /*Fetch data for the Querier.
+     - ``on_succ`` -- : entries->entries*/
+
+    let hla_idd = "HlaEdpSeq.fetch";
+
+    events.on(
+	stack_name,
+	({event_type, args, trace})=>{
+	    if(args.action=="fetch.enter")
+		host_reducer.call(
+		    "ls_tags", {tags: args.input.query.split(",")},
+		    (data)=>{
+			events.emit(
+			    host_name+".ActionsQueue",
+			    {
+				fargs:{
+				    action:"fetch.exit",
+				    input: {entries: on_succ(data)}}
+				
+				// here this is not necessary
+				// since only one instance of this hla being
+				// used (on init of mc component)
+				// unsubscribe on complition
+				/*
+				on_done: (trace)=>{
+				    if(events.has(host_name+".ActionsQueue", {idd:hla_idd})){
+					events.off(host_name+".ActionsQueue", {idd:hla_idd});
+				    }
+				}
+				 */
+			    });});
+	    
+	}, {idd: hla_idd});    
+}
+
+
 export function add_v1(host_reducer, parent_id, on_succ){
     /*Approach here is similiar to the old itra one:
      call each hla with common res object to forfill
@@ -131,7 +202,7 @@ export function add(host_reducer, apply_tree_for_node, folder){
     // let hla_action_name = "hla.edp.seq.add";
 
     folder = folder==undefined?true:folder;
-    console.log("PROBLEM: folder:", folder);
+    // console.log("PROBLEM: folder:", folder);
     events.on(stack_name,
 	      ({event_type, args, trace})=>{
 		  if(args.action=="add.tree.enter")
@@ -192,7 +263,7 @@ export function load_root(host_reducer, on_succ){
 
 	 // succ
 	 (data)=>{
-	     console.log("PROBLEM: load_root: data", data);
+	     // console.log("PROBLEM: load_root: data", data);
 	     if(data.length == 0)
 		 
 		 // create root node if not exist
@@ -237,7 +308,7 @@ export function activate(host_reducer, id, on_succ){
 
 export function ls_note(host_reducer, _id, on_succ){
      host_reducer.call("ls", {id: _id}, (data)=>{
-	 console.log("PROBLEM: ls_note:data", data);
+	 // console.log("PROBLEM: ls_note:data", data);
 
 	 // show only forward neighbors:
 	 on_succ(data[1]);});
@@ -262,7 +333,7 @@ function mk_edges(host_reducer, edges_list, on_succ){
 
 // TODO: map to notes:
 function mk_notes(host_reducer, notes_list, on_succ){
-    console.log("PROBLEM: folder notes to create:", notes_list);
+    // console.log("PROBLEM: folder notes to create:", notes_list);
     host_reducer.call("mk_notes", {notes: notes_list},
 		      (data)=>on_succ(data["[Id]"]));
 }
