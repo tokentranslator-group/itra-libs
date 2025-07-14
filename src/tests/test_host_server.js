@@ -10,7 +10,9 @@ import {HostComponent} from '../env/host/host_react.js';
 import {mk_host_server, ServiceReducer,$_db_handler, sim_db_handler} from  '../env/host/host_server.js';
 
 import {apply_tree} from '../env/tree/ttree_helpers.js';
-import {load_root, ls_note, map_to_notes, activate} from './test_hla.js';
+import {ls_note} from '../dsl/lla.js';
+import {load_root, map_to_notes, activate} from '../dsl/hla.js';
+
 
 
 const host_name = "GraphDb";

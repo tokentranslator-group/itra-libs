@@ -27,7 +27,7 @@ import {Joiner} from '../env/joiner/joiner_react.js';
 
 import {Querier} from '../env/querier/querier_react.js';
 
-import {load_root, add, add_seq, activate, fetch, join} from './test_hla.js';
+import {load_root, add, add_seq, activate, fetch, join} from '../dsl/hla.js';
 
 const host_name = "GraphDb";
 const service_name = "graph_db";
