@@ -32,13 +32,14 @@ class BehaviorComponent{
 	this.builder = behavior_builder;
     }
     
-    enter({on_init}){
+    enter(on_init){
 	// this.host_fsm = mk_host_as_state(this.host_name);
 	// this.host_fsm.on();
 
 	this.core = this.builder(this.host_name, this.name);
 	// TODO: problem here: not tree available yet:
-	this.core.on();
+	// console.log("PROBLEM: core:", this.core);
+	this.core.on(on_init);
 	// TODO
 	// this.io = new IO(this.host_name);
 	// events.on("show."+this.name)
@@ -141,7 +142,7 @@ function InnerComponent({core_comp_builder, name, host_name, data, actions,
 	// console.log("storage.current", storage.current);
 	if (!comp_ref.current){
 	    // TODO: spawning behavior: comp.mk(()=>set_show(!show))
-	    comp.mk({});
+	    comp.mk(data);
 	    console.log("ENTERING: calling mk_comp to init the three.current");
 	    comp_ref.current = comp;
 	    behavior_ref.current = comp.behavior.core;

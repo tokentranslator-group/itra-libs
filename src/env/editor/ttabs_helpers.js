@@ -4,6 +4,33 @@ import {mk_core_comp_v1} from '../react_wrapper.js';
 import {mk_editor_fsm} from './behavior.js';
 
 
+export function map_host_editor({id, body, type, tags, date}){
+    let check = (attr)=>(attr!==undefined)?attr:"";
+    return {
+	id: id,
+	tabs_ids: [
+	    "body", "kind",
+	    // "date"
+	],
+	tabs_contents: [
+	    check(body), check(type),
+	    //check(date)
+	],
+	field_tags: tags.split(",")
+    };
+}
+
+export function map_editor_host({id, tabs_ids, tabs_contents, field_tags}){
+    
+    return {
+	body: tabs_contents[0],
+	kind: tabs_contents[1],
+	// date: tabs_contents[2],
+	tags: field_tags.join(","),
+	id: id
+    };
+}
+
 // FOR v1:
 function mk_core_comp_for_editor_fsm_v1(options){
     /*

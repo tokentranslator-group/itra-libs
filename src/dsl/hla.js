@@ -1,7 +1,7 @@
 import {events} from 'itra-behavior/src/eHandler.js';
 import {unsubscribe} from 'itra-behavior/src/core/dsl/hlaEdpSeq.js';
 
-import {ls_note, get, gets, mk_edges, mk_notes} from './lla.js';
+import {ls_note, get, gets, mk_edges, mk_notes, rm as _rm, save as _save} from './lla.js';
 
 const host_name = "GraphDb";
 const service_name = "graph_db";
@@ -40,6 +40,76 @@ export function cont01(host_reducer, data, on_succ, root){
 }
 
 // hla-s:
+export function save(host_reducer, map_to_host, map_from_host){
+    /*
+     Saving meddiator
+     No need for unregistering since used only once in init*/
+
+    let hla_idd = "HlaEdpSeq.save";
+    events.on(
+	stack_name,
+	({event_type, args, trace})=>{
+	    
+	    if(args.action=="save.enter"){
+		console.log("PROBLEM save.enter:", args);
+		let data = args.input.data;
+		console.log("PROBLEM save.enter:", map_to_host(data));
+		_save(
+		    host_reducer,
+		    map_to_host(data),
+		    (result)=>{
+			if(result)
+			    // fetch updated results:
+			    get(host_reducer, data.id, (data)=>{
+				events.emit(host_name+".ActionsQueue", {
+				    fargs: {action: "save.exit", input:{data: map_from_host(data)}},
+				    on_done: (trace)=>{
+					console.log("Host: save.exit done");
+				}});
+			    });
+			
+		    });
+	    }
+	}, {idd: hla_idd});
+}
+
+
+export function rm(host_reducer){
+    let hla_idd = "HlaEdpSeq.rm";
+
+    events.on(
+	stack_name,
+	({event_type, args, trace})=>{
+	    if(args.action=="rm.enter"){
+		// console.log("PROBLEM: rm: input:", args.input);
+		_rm(host_reducer, args.input.selected.map((node)=>node.id), (result)=>
+		  {
+		      events.emit(stack_name, 
+				  {
+				      fargs: {
+					  action: "rm.exit",
+					  input: {result: result}
+				      },
+				      
+				      on_done: (trace)=>{
+					  if(events.has(stack_name, {idd:hla_idd})){
+					      events.off(stack_name, {idd:hla_idd});
+					  }
+					  
+				      }});
+		  });
+	    }
+	});
+
+
+    events.emit(stack_name,
+		{
+		    fargs: {action: "rm"}
+		    
+		});
+}
+
+
 export function join(host_reducer, on_succ){
     /*
      Joiner meddiator

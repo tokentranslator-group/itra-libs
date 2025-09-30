@@ -1,14 +1,16 @@
 // lla-s:
-export function rm(host_reducer, _id, on_succ){
+export function rm(host_reducer, ids, on_succ){
     
-     host_reducer.call("rm_notes", {"ids":[_id]}, (data)=>{
+     host_reducer.call("rm_notes", {"ids": ids}, (data)=>{
 	 on_succ(true);
      });
 }
 
 export function save(host_reducer, data, on_succ){
-    /*
-     - ``data`` -- has to contain id!
+    /*Save note or edge.
+
+     - ``data`` -- has to contain id and table_type ("note" or "edge")!
+     save(reducer, {id:notes_ids[0], table_type: "note"}, console.log)
      */
     if(!data.hasOwnProperty("id"))
 	throw new Error("save.hla: data has to contain id!");

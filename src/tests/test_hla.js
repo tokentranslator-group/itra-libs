@@ -1,3 +1,11 @@
+/*Testing sequential huge level actions each composed from
+events which once started is unknown when ended. Once ended
+it should call/trigger next event in the seq. 
+Sequential means that the order should be preserved.
+For instance: the rm_nodes call to the server should be triggered only
+after the mk_nodes from the server return succ.
+ It looks rather like rxjs pipes, I quess*/
+
 import React from 'react';
 import {useState, useEffect, useRef} from 'react';
 import ReactDOM from 'react-dom';
@@ -41,7 +49,7 @@ function test_rm(){
 	host_name: host_name,
 	service_name: service_name});
 
-    mk_notes(reducer, [{value: "testing_rm.lla"}],
+    mk_notes(reducer, [{value: "testing_rm0.lla"}, {value: "testing_rm1.lla"}],
 	     
 	     // replace all ids with notes:
 	     (notes_ids)=>{
@@ -49,7 +57,7 @@ function test_rm(){
 
 		 console.log("rm.lla: calling rm...");
 
-		 rm(reducer, {id:notes_ids[0], table_type: "note"}, (data)=>{
+		 rm(reducer, notes_ids, (data)=>{
 		     console.log("rm.lla: result:", data);
 		     
 		     // get all notes in db:

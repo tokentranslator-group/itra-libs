@@ -20,14 +20,14 @@ import {apply_tree} from '../env/tree/ttree_helpers.js';
 
 import {EditorComponent} from '../env/editor/ttabs_react.js';
 // import {mk_editor_fsm} from '../env/editor/behavior.js';
-import {mk_core_comp_for_editor_fsm_v1} from '../env/editor/ttabs_helpers.js';
+import {mk_core_comp_for_editor_fsm_v1, map_host_editor, map_editor_host} from '../env/editor/ttabs_helpers.js';
 
 import {Joiner} from '../env/joiner/joiner_react.js';
 
 
 import {Querier} from '../env/querier/querier_react.js';
 
-import {load_root, add, add_seq, activate, fetch, join} from '../dsl/hla.js';
+import {load_root, add, add_seq, activate, fetch, join, rm, save} from '../dsl/hla.js';
 
 const host_name = "GraphDb";
 const service_name = "graph_db";
@@ -55,6 +55,11 @@ function TestMc({db_handler}){
 
 	// for joiner:
 	join(reducer, (data)=>apply_tree(data).children);
+
+	// for saving:
+	save(reducer, map_editor_host, map_host_editor);
+
+	
     },[]);
 
 
@@ -77,6 +82,7 @@ function TestMc({db_handler}){
 	    
 	    <Querier host_name={host_name}
 	on_selected={(elm)=>{
+	    console.log("PROBLEM map: elm:", elm);
 	    events.emit("show."+editor_name,{fargs:{data: {
 		tabs_ids: ["parser"],
 		tabs_contents: [elm.title],
@@ -106,7 +112,10 @@ function TestMc({db_handler}){
 	    activate: (event, data) => {
 		console.log("clicked on: ", data.node);
 		let node = data.node.data;
-		console.log("PROBLEM: node:", node);
+		console.log("PROBLEM: tree activate node:", node);
+
+		console.log("PROBLEM: tree activate map node:",
+			    map_host_editor(node));
 		if(node.kind == "folder")
 		    activate(reducer, data.node.data.id, (nodes)=>{
 			console.log("PROBLEM: activate folder nodes:", nodes);
@@ -124,17 +133,23 @@ function TestMc({db_handler}){
 		    // hide first then reopen again:
 		    // events.emit("hide."+editor_name, {
 		    //    on_done:(trace)=>{
+		    // TODO: not give him data, only id,
+		    // the data he should fetch by itself!
+		    // or rather get(host, id, (node)=>emit(show,data:node))!
+		    events.emit("show."+editor_name,{
+			fargs:{data: map_host_editor(node)}});
+		    /*
 		    events.emit("show."+editor_name,{fargs:{data: {
 			tabs_ids: ["body", "kind", "value"],
 			tabs_contents: [node.body, node.kind, node.value],
-			field_tags: [node.tags]}}});
+			field_tags: [node.tags]}}});*/
 		//   }});
 	    },
 	    //TODO: data_update: (),
 	    menu:{
 		
-		items: ["join", "mk_folder", "add", "load", "save"],
-		tooltips: ["join", "mk_folder", "add", "load entry", "rewrite selected model"],
+		items: ["join", "mk_folder", "add", "load", "rm"],
+		tooltips: ["join", "mk_folder", "add", "load entry", "remove selected"],
 		
 		// keys here must be equal to ``menu_items``:
 		callbacks: {
@@ -173,11 +188,47 @@ function TestMc({db_handler}){
 			
 			// fsm.emit("add.enter")
 		    },
-		    "save": ()=>console.log("saving...")
+		    "rm": ()=>{
+			console.log("removing...");
+			rm(reducer);
+		    }
 		}
 	    }}}
 
 	    />
+
+	    <EditorComponent
+	name={editor_name}
+	host_name={host_name}
+	core_comp_builder={(options)=>{
+	    console.log("ISSUE:show/hidecore_comp_builder : options:", options);
+	    return mk_core_comp_for_editor_fsm_v1(options);}}
+	data={{
+	    tabs_ids: ["parser", "out"],
+	    tabs_contents: ["2+2", "4"],
+	    field_tags: ["math"]}}
+	
+	actions={{
+	
+	    // TODO: unite to dict:
+	    buttons_names: ["save", "close"],
+	    tabs_buttons_callbacks:[
+		(tab_id, tab_content_text_id, _self)=>
+		    (e)=>{
+			console.log("Editor.save");
+			events.emit(host_name+".ActionsQueue",
+				    {fargs: {action: "save",
+					    input: _self.data}});
+
+		    },
+		(tab_id, tab_content_text_id, _self)=>
+		    (e)=>{
+			console.log("Editor.close");
+			events.emit("hide."+editor_name, {});
+		    }	    	    
+	]}}
+	show={false}
+	    />;
 
 	    <HostComponent host_fsm={get_host(db_handler)}/>
     	    

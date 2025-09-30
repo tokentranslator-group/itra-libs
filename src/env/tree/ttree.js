@@ -462,6 +462,13 @@ Tree.prototype.get_selected = function(){
     return this.$(this.storage.tree_div_id).fancytree("getTree").getSelectedNodes();     
 };
 
+Tree.prototype.rm_selected = function(){
+    let selected = this.$(this.storage.tree_div_id).fancytree("getTree").getSelectedNodes();     
+    // console.log("PROBLEM: rm_selected: selected:", selected);
+    selected.forEach((node, idx)=>node.remove());
+};
+
+
 Tree.prototype.deselect = function(){
     this.$(this.storage.tree_div_id).fancytree("getTree").selectAll(false);     
 };
@@ -478,6 +485,7 @@ Tree.prototype.remove_selected_node = function(check_empty){
      return;
      */
     var node = self.$(self.storage.tree_div_id).fancytree("getActiveNode");
+    console.log("PROBLEM: ttree.remove_selected_node node:", node);
     if(!node)
 	return;
     if(check_empty)

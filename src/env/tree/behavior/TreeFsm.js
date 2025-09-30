@@ -19,7 +19,10 @@ function mk_tree_fsm(host_name, state_name){
 	    "join.exit": {from: "Joining", to: "Idle"},
 	    "join": {from: "Idle", to: "Joining"},
 	    add: {from: "Idle", to: "Adding"},
+	    rm: {from: "Idle", to: "Removing"},
+	    "rm.exit": {from: "Removing", to: "Idle"},
 	    update: {from: "Idle", to: "Updating"}
+	    
 	},
 
 	effects:{},
@@ -177,8 +180,10 @@ function mk_tree_fsm(host_name, state_name){
 		    	on:(self, input)=>{
 			    // TODO: input.on_succ(data)
 			    events.emit("show."+"Joiner",{
-				fargs:{data: {
-				    selected: self.tree.get_selected()}}
+				fargs:{
+				    action: "tree.rm.enter",
+				    input: {
+					selected: self.tree.get_selected()}}
 				//on_done: (trace)=>self.tree.deselect()
 			    });
 			},
@@ -187,6 +192,44 @@ function mk_tree_fsm(host_name, state_name){
 			    console.log("NODE::ACTIONS:Joining: updating tree after join.exit: input", input);
 			    if(tree_data!==undefined)
 				self.tree.update_tree(tree_data);
+			}
+		    }
+		})
+		
+	    },
+
+
+	    // Note the usage of mk_node here
+	    // and protocols only scheme (events used only for deselection):
+	    {
+		name: "Removing",
+		builder: (parent_name)=> mk_node({
+		    host_name: parent_name,
+		    node_name: "Removing",
+		    
+		    stacks_names: ["ActionsQueue"],
+		    
+		    events: {},
+
+		    protocols: {
+		    	on:(self, input)=>{
+			    // TODO: input.on_succ(data)
+			    events.emit(host_name+".ActionsQueue",{
+				fargs:{
+				    action: "rm.enter",
+				    
+				    input: {
+					selected: self.tree.get_selected().map((entry)=>entry.data)}}
+				//on_done: (trace)=>self.tree.deselect()
+			    });
+			},
+			off:(self, input)=>{
+			    let result = input.result;
+			    // console.log("NODE::ACTIONS:Removing.off: rm.exit: input", input);
+			    if(result)
+				self.tree.rm_selected(false);
+			    else
+				throw new Error("NODE::ACTIONS:Removing.off: some error hapend on server side");
 			}
 		    }
 		})

@@ -13,7 +13,7 @@ function mk_editor_fsm(host_name, name){
     state_events["mk."+name] = {
 	stack_name: "ActionsQueue",
 	callback: (self, input)=>{
-	    console.log("NODE::FSM: mk being called");
+	    console.log("NODE::FSM: mk being called, input:", input);
 	    // update editor for each state:
 	    Object.entries(self.states).forEach((state)=>{
 		state[1].editor = input.frame;
@@ -51,7 +51,8 @@ function mk_editor_fsm(host_name, name){
 
 	protocols:{
 	    on:(self, input)=>{
-		console.log("NODE::FSM: on: call editor.create_tabs");
+
+		console.log("NODE::FSM: on: call editor.create_tabs, input:", input);
 		// self.editor.create_tabs();
 	    },
 	    off:(self, input)=>{
@@ -72,7 +73,7 @@ function mk_editor_fsm(host_name, name){
 	states:[
 	    {
 		name: "Saving",
-		builder: (parent_name)=>mk_saving_state(parent_name)
+		builder: (parent_name)=>mk_saving_state(parent_name, host_name)
 	    },
 	    {
 		name: "Idle",
@@ -83,8 +84,8 @@ function mk_editor_fsm(host_name, name){
 
 }
 
-
-function mk_saving_state(host_name){
+// note: use of parent external host:
+function mk_saving_state(host_name, parent_host_name){
     return mk_node({
 	host_name: host_name,
 	node_name: "Saving",
@@ -92,9 +93,10 @@ function mk_saving_state(host_name){
 	protocols:{
 	    on:(self, input)=>{
 		let data = self.editor.save();
-
-		// ISSUE: Host some how should be given automatically
-		events.emit("Host.ActionsQueue", ({
+		
+		console.log("PROBLEM: EditorFsm input:", input);
+		console.log("PROBLEM: EditorFsm data:", data);
+		events.emit(parent_host_name+".ActionsQueue", ({
 		    fargs:{
 			action: "save.enter", input: {data: data}}
 		}));
@@ -102,6 +104,7 @@ function mk_saving_state(host_name){
 	    },
 	    
 	    off:(self, input)=>{
+		console.log("PROBLEM Saving off, input.data:",input.data);
 		self.editor.load(input.data);
 	    }
 	},

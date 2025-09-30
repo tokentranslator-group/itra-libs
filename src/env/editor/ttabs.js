@@ -132,6 +132,7 @@ function Tabs(options){
     self.name = options.name || "ttabs";
     
     self.data = {};
+    self.data["id"] = options.data.id;
     self.data["tabs_ids"] = options.data.tabs_ids
 	|| ["tab0", "tab1"];
     self.data["tabs_contents"] = options.data.tabs_contents
@@ -383,6 +384,7 @@ Tabs.prototype.load = function(json_data){
 	console.log("self.data = ", self.data);
     }
     self.data = {
+	id: json_data["id"], // if any was given!
 	tabs_ids: json_data["tabs_ids"],
 	tabs_contents: json_data["tabs_contents"]
     };
