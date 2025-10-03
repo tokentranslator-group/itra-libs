@@ -2,6 +2,7 @@ import {events} from 'itra-behavior/src/eHandler.js';
 import {mk_node, mk_idle_state} from 'itra-behavior/src/type_classes/fsm/behaviors/helpers.js';
 import $ from 'jquery';
 
+
 function sim_db_handler({url, to_send, succ, dbg}){
     /*This simulator will just call succ with 
      the `to_send.service.action.args` as the returning data*/
@@ -47,10 +48,14 @@ function $_db_handler({url, to_send, succ, dbg}){
 
 
 class ServiceReducer{
-    constructor({host_name, service_name}){
+
+
+    constructor({host_name, service_name, data_protocol}){
 	this.host_name = host_name;
 	this.service_name = service_name;
+	this.data_protocol = data_protocol;
     }
+
     call(action, args, on_succ){
 	/*
 	 Examples:
@@ -76,6 +81,51 @@ class ServiceReducer{
 		}
 	    }});
     }
+    // TODO: registering for sign and verify events
+    // to subsc from stack
+    verify(idd, msg){
+	/*Verify that internal data format protocol spec hold for a msg in
+	 hla with hla_idd
+    
+	 There is internal data protocol which been checked for
+	 each hla and 
+	 should be respected by all components and their behavior.
+	 
+	 So each msg.input should looks like
+	 {
+	 id: ...,
+	 ...
+	 protocol: protocol_v0,
+	 }
+	 // graph_db protocol is same
+	 // as provocol_v0 (the data
+	 // recived alredy supported it),
+	 
+	 // internal data format protocol,
+	 // should be respected by all components and their behavior.
+	 
+	 */
+	const protocol = this.data_protocol;
+
+	if(!msg.hasOwnProperty("protocol")){
+	    console.log("msg:", msg);
+	    throw new Error(idd+" "+"Recived msg having no spec protocol!");
+	}
+	if(msg.protocol.type!==protocol.type){
+	    console.log("msg:", msg);
+	    throw new Error(idd+" "+"protocol types verification failure! in ");
+	}
+	if(msg.protocol.name!==protocol.name){
+	    console.log("msg:", msg);
+	    throw new Error(idd+" "+"protocol names verification failure! in ");
+	}
+	return true;
+    }
+
+    sign(msg){
+	msg.protocol = this.data_protocol;
+    }
+
 }
 
 
@@ -210,7 +260,7 @@ function mk_host_server({host_name, service_name, url, db_handler}){
 					    action:service_name+".exit",
 					    input:{
 						action: input.action,
-						data: data
+						input: data
 					    }},
 					on_done: (trace)=>{
 					    // this should work though:

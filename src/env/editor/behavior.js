@@ -1,11 +1,12 @@
 import {events} from 'itra-behavior/src/eHandler.js';
 
 import {mk_node, mk_idle_state} from 'itra-behavior/src/type_classes/fsm/behaviors/helpers.js';
+import {map_host_editor, map_editor_host} from './ttabs_helpers.js';
 
 
 
-
-function mk_editor_fsm(host_name, name){
+function mk_editor_fsm(host_name, name, data_protocol){
+    // TODO: data_protocol
     // TODO: generalize both editor and tree top/root node/fsm:
     var state_events = {};
     
@@ -37,8 +38,9 @@ function mk_editor_fsm(host_name, name){
 	callback: (self, input)=>{
 	    console.log("ISSUE show ::FSM on "+"update."+name+":input", input);
 	    // self.editor.remove();
-	    if(input.hasOwnProperty("data"))
-		self.editor.load(input.data);
+	    //if(input.hasOwnProperty("data"))
+	    // TODO: verify data protocol
+	    self.editor.load(map_host_editor(input));
 	    // self.editor.create_tabs();
 	}
     };
@@ -73,7 +75,7 @@ function mk_editor_fsm(host_name, name){
 	states:[
 	    {
 		name: "Saving",
-		builder: (parent_name)=>mk_saving_state(parent_name, host_name)
+		builder: (parent_name)=>mk_saving_state(parent_name, host_name, data_protocol)
 	    },
 	    {
 		name: "Idle",
@@ -85,7 +87,7 @@ function mk_editor_fsm(host_name, name){
 }
 
 // note: use of parent external host:
-function mk_saving_state(host_name, parent_host_name){
+function mk_saving_state(host_name, parent_host_name, data_protocol){
     return mk_node({
 	host_name: host_name,
 	node_name: "Saving",
@@ -98,14 +100,24 @@ function mk_saving_state(host_name, parent_host_name){
 		console.log("PROBLEM: EditorFsm data:", data);
 		events.emit(parent_host_name+".ActionsQueue", ({
 		    fargs:{
-			action: "save.enter", input: {data: data}}
+			// TODO: data protocol
+			action: "save.enter",
+			input: map_editor_host(data)}
 		}));
 		
 	    },
 	    
 	    off:(self, input)=>{
-		console.log("PROBLEM Saving off, input.data:",input.data);
-		self.editor.load(input.data);
+		/*
+		 - ``input`` -- some event-s args.input
+		 */
+		console.log("PROBLEM Saving off, input:",input);
+		
+		// TODO add protocol verification to fsm
+		// recived args protocol check: 
+		// verify(sefl.idd, input, protocol);
+		
+		self.editor.load(map_host_editor(input));
 	    }
 	},
 	/*

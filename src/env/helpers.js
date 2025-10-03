@@ -8,4 +8,5 @@ function check(name, options, attribute){
     return attr;
 }
 
+
 export {throw_error, check}

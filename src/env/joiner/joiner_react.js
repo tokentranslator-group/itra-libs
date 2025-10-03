@@ -16,7 +16,9 @@ import 'jquery-ui/ui/widgets/draggable';
 export function Joiner({host_name}){
     /*Left panel is a source one.
      Right panel is a destination one.
-     On spawning the given selected will be put to the left panel*/
+     On spawning the given selected will be put to the left panel
+     Listening for the action `selected`*/
+
     const name = "Joiner";
     const [show, set_show] = useState(false);
 
@@ -81,8 +83,18 @@ export function Joiner({host_name}){
 	};
     }, [show, state]);
     
-    let LeftPanel = left_selected.map((elm, idx)=><li key={idx.toString()}>{elm.title}</li>);
-    let RightPanel = right_selected.map((elm, idx)=><li key={idx.toString()}>{elm.title}</li>);
+    let LeftPanel = left_selected.map((elm, idx)=><div key={idx.toString()}>
+				      <li>{"id: "+elm.id.toString()}</li>
+				      <li>{"value: "+elm.value}</li>
+				      <li>{"tags: "+elm.tags}</li>
+				      <li>{"body: "+elm.body.slice(0, 30)}</li>
+				      </div>);
+    let RightPanel = right_selected.map((elm, idx)=><div key={idx.toString()}>
+					<li>{"id: "+elm.id.toString()}</li>
+					<li>{"value: "+elm.value}</li>
+					<li>{"tags: "+elm.tags}</li>
+					<li>{"body: "+elm.body.slice(0, 30)}</li>
+					</div>);
 
     if(show)
 	return(<div ref={el} className={"style_editor_dinamic editor_overflow"}>

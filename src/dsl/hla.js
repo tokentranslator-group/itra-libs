@@ -40,10 +40,18 @@ export function cont01(host_reducer, data, on_succ, root){
 }
 
 // hla-s:
-export function save(host_reducer, map_to_host, map_from_host){
+// all should respect the internal format spec
+export function save(host_reducer, on_succ){
     /*
+     Registering for save.
+     So save(host) will not saving anything 
+
      Saving meddiator
-     No need for unregistering since used only once in init*/
+     No need for unregistering since used only once in init
+
+     Triggering event: `save.enter`
+     args: args.input.data::Dict
+     */
 
     let hla_idd = "HlaEdpSeq.save";
     events.on(
@@ -52,18 +60,30 @@ export function save(host_reducer, map_to_host, map_from_host){
 	    
 	    if(args.action=="save.enter"){
 		console.log("PROBLEM save.enter:", args);
-		let data = args.input.data;
-		console.log("PROBLEM save.enter:", map_to_host(data));
+		
+		// recived msg protocol check: 
+		// TODO: editor.fsm do not have one!
+		//host_reducer.verify(hla_idd, args.input);
+
+		let data = args.input;
+		console.log("PROBLEM:protocol: save.enter:", data);
 		_save(
 		    host_reducer,
-		    map_to_host(data),
+		    data,
 		    (result)=>{
 			if(result)
 			    // fetch updated results:
 			    get(host_reducer, data.id, (data)=>{
+
+				let msg = data;
+				console.log("PROBLEM: saving: data", data);
 				events.emit(host_name+".ActionsQueue", {
-				    fargs: {action: "save.exit", input:{data: map_from_host(data)}},
+				    fargs: {
+					action: "save.exit",
+					input: msg},
+				    
 				    on_done: (trace)=>{
+					on_succ()
 					console.log("Host: save.exit done");
 				}});
 			    });
@@ -75,6 +95,13 @@ export function save(host_reducer, map_to_host, map_from_host){
 
 
 export function rm(host_reducer){
+    /*
+     Will work on call, not just registering
+     so rm(host) will trigger the removal
+
+     Triggering event: `rm.enter`
+     args: args.input.selected // list of entries with id
+     */
     let hla_idd = "HlaEdpSeq.rm";
 
     events.on(
@@ -82,8 +109,15 @@ export function rm(host_reducer){
 	({event_type, args, trace})=>{
 	    if(args.action=="rm.enter"){
 		// console.log("PROBLEM: rm: input:", args.input);
-		_rm(host_reducer, args.input.selected.map((node)=>node.id), (result)=>
-		  {
+
+		
+		_rm(host_reducer, args.input.selected.map((node)=>{
+		    
+		    // recived msg protocol check: 
+		    // host_reducer.verify(hla_idd, node);
+		
+		    return node.id;}), (result)=>
+		    {
 		      events.emit(stack_name, 
 				  {
 				      fargs: {
@@ -113,31 +147,47 @@ export function rm(host_reducer){
 export function join(host_reducer, on_succ){
     /*
      Joiner meddiator
-     No need for unregistering since used only once in init*/
+     No need for unregistering since used only once in init
+
+     Triggering event: "join.enter"
+     args: // from fancytree format:
+       args.input.destination as parents // each have data.id
+       args.input.source as children  // each have data.id
+       
+     */
 
     let hla_idd = "HlaEdpSeq.join";
     events.on(
 	stack_name,
 	({event_type, args, trace})=>{
 	    if(args.action=="join.enter"){
-		// console.log("PROBLEM.Joiner.args:", args);
+		console.log("PROBLEM.Joiner.args:", args);
 		let parents = args.input.destination;
 		let children = args.input.source;
-		// console.log("PROBLEM.Joiner children:", children);
+		console.log("PROBLEM.Joiner children:", children);
 		let new_edges = parents.reduce(
 		    (acc, parent)=>(
 			[...acc, ...children.map(
 			    (child)=>({
-				_from: parent.data.id,
-				_to: child.data.id}))]), []);
-		// console.log("PROBLEM.Joiner new_edges:", new_edges);
+				_from: parent.id,
+				_to: child.id
+				//_from: parent.data.id,
+				//_to: child.data.id
+			    }))]), []);
+		console.log("PROBLEM.Joiner new_edges:", new_edges);
 		mk_edges(
 		    host_reducer,
 		    new_edges,
 		    (data_edges)=>{
-			events.emit(stack_name, {fargs:{
-			    action:"join.exit",
-			    input: {}}});
+			events.emit(host_name+".ActionsQueue", {
+			    fargs:{
+				action:"join.exit",
+				input: {}},
+			    on_done: (trace)=>{
+				on_succ();
+				
+			    }
+			});
 		    });	
 	    }
 	}, {idd: hla_idd});
@@ -146,7 +196,17 @@ export function join(host_reducer, on_succ){
 
 export function fetch(host_reducer,on_succ){
     /*Fetch data for the Querier.
-     - ``on_succ`` -- : entries->entries*/
+     - ``on_succ`` -- : entries->entries
+
+     All entries use internal format: {id, value, kind, tags, date}
+     
+     Triggering event: `fetch.enter`
+     args: // from querier:
+      args.input.query::String // will be used as tags
+
+     return:
+       input.entries:: Dict
+     */
 
     let hla_idd = "HlaEdpSeq.fetch";
 
@@ -156,13 +216,13 @@ export function fetch(host_reducer,on_succ){
 	    if(args.action=="fetch.enter")
 		host_reducer.call(
 		    "ls_tags", {tags: args.input.query.split(",")},
-		    (data)=>{
+		    (nodes_list)=>{
 			events.emit(
 			    host_name+".ActionsQueue",
 			    {
 				fargs:{
 				    action:"fetch.exit",
-				    input: {entries: on_succ(data)}}
+				    input: {entries: on_succ(nodes_list)}}
 				
 				// here this is not necessary
 				// since only one instance of this hla being
@@ -175,7 +235,7 @@ export function fetch(host_reducer,on_succ){
 				    }
 				}
 				 */
-			    });});
+				});});
 	    
 	}, {idd: hla_idd});    
 }
@@ -256,7 +316,17 @@ function add_tree_enter(){
 
 
 export function add_seq(host_reducer, apply_tree_for_node, folder){
-    /*Sequential reimplementation of add*/
+    /*Sequential reimplementation of add
+     Only work with a tree
+
+     Triggering event: `add.tree.enter`
+     Args: // from fancytree
+       args.input.node_name::String
+       args.input.parent_node::Dict // should have id
+
+     :: NodeDict -> Dict
+     - ``apply_tree_for_node`` -- to convert final result
+     */
 
     let hla_idd = "HlaEdpSeq.add";
     let idd_idx = 0;
@@ -272,6 +342,7 @@ export function add_seq(host_reducer, apply_tree_for_node, folder){
 		      mk_notes(
 			  host_reducer,
 			  [{
+			      // TODO: adjust format value?body:
 			      value: args.input.node_name,
 			      kind: folder?"folder":"note"}],
 
@@ -324,6 +395,7 @@ export function add_seq(host_reducer, apply_tree_for_node, folder){
 	    host_name+".ActionsQueue",
 	    {
 		fargs:{
+		    // trigger tree fsm
 		    action:"add.tree.exit",
 		    input: {node: apply_tree_for_node(data_get_child)}},
 		
@@ -341,7 +413,15 @@ export function add_seq(host_reducer, apply_tree_for_node, folder){
 
 export function add(host_reducer, apply_tree_for_node, folder){
     /*
-     - ``apply_tree_for_node`` -- used here to convert result before sending/emitting it to tree
+     Registering for stack_name-s add.tree.enter event.
+     When reciving one, trigger host add action and wait for results.
+
+     Triggering event: `add.tree.enter`
+     Args: // from fancytree
+       args.input.node_name::String
+       args.input.parent_node::Dict // should have id
+
+     - ``apply_tree_for_node`` -- used here to convert result before returning/sending/emitting it back to tree
      */
     // identifier for this hla subs/unsubs:
     let hla_idd = "HlaEdpSeq.add";
@@ -357,15 +437,20 @@ export function add(host_reducer, apply_tree_for_node, folder){
 		      // create child:
 		      mk_notes(
 			  host_reducer,
-			  [{value: args.input.node_name, kind: folder?"folder":"note"}],
+			  // TODO: adjust format value?body:
+			  [{
+			      value: args.input.node_name,
+			      kind: folder?"folder":"note"}],
 			  (notes_ids)=>{
 			      const child_id = notes_ids[0];
 
 			      // connect child to parent:
 			      mk_edges(
 				  host_reducer,
-				  [{_from: args.input.parent_node.id,
-				    _to:child_id}],
+				  [{
+				      _from: args.input.parent_node.id,
+				      _to:child_id
+				  }],
 				  (data_edges)=>
 
 				      // get new node obj:
@@ -378,8 +463,10 @@ export function add(host_reducer, apply_tree_for_node, folder){
 						  host_name+".ActionsQueue",
 						  {
 						      fargs:{
+							  // trigger tree fsm
 							  action:"add.tree.exit",
-							  input: {node: apply_tree_for_node(data_get_child)}},
+							  input: {
+							      node: apply_tree_for_node(data_get_child)}},
 						      
 						      // unsubscribe on complition
 						      on_done: (trace)=>{
@@ -406,7 +493,9 @@ export function add(host_reducer, apply_tree_for_node, folder){
 export function load_root(host_reducer, on_succ){
     
     // list root note:
-    gets(host_reducer, {value:"root", table_type: "note"},
+    gets(host_reducer, {
+	// TODO: adjust format value?body:
+	value:"root", table_type: "note", kind: "folder"},
 
 	 // succ
 	 (data)=>{
@@ -414,6 +503,7 @@ export function load_root(host_reducer, on_succ){
 	     if(data.length == 0)
 		 
 		 // create root node if not exist
+		 // TODO: adjust format value?body:		 
 		 mk_notes(host_reducer, [{value: "root", kind:"folder"}],
 			  
 			  // replace all ids with notes:
@@ -424,9 +514,10 @@ export function load_root(host_reducer, on_succ){
 	 });
 }
 
-
+// ::ids -> Dict
 export function map_to_notes(host_reducer, ids, on_succ, result){
     /*
+     Map ids to Notes entries by calling get.
      Call get hla for each index in ids list reqursivelly.  
      Reqursive - this is a glimps on how hla could be called sequentially*/
 
@@ -443,6 +534,8 @@ export function map_to_notes(host_reducer, ids, on_succ, result){
 
 
 export function activate(host_reducer, id, on_succ){
+    /*Get node with id from host*/
+
     get(host_reducer, id, (data)=>{
 	if(data.kind == "folder")
 	    ls_note(host_reducer, id, on_succ);

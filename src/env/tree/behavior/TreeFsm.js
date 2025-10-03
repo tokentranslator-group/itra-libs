@@ -178,18 +178,25 @@ function mk_tree_fsm(host_name, state_name){
 
 		    protocols: {
 		    	on:(self, input)=>{
+			    
 			    // TODO: input.on_succ(data)
 			    events.emit("show."+"Joiner",{
 				fargs:{
-				    action: "tree.rm.enter",
+				    action: "None",
 				    input: {
-					selected: self.tree.get_selected()}}
+					selected: self.tree.get_selected()
+					    // TODO: data_protocol
+					    .map((entry)=>({
+						id: entry.data.id,
+						value: entry.data.title
+					    }))}}
 				//on_done: (trace)=>self.tree.deselect()
 			    });
 			},
 			off:(self, input)=>{
+			    console.log("NODE::ACTIONS:Joining: updating tree after join.exit: input", input);			    
 			    let tree_data = input.tree_data;
-			    console.log("NODE::ACTIONS:Joining: updating tree after join.exit: input", input);
+
 			    if(tree_data!==undefined)
 				self.tree.update_tree(tree_data);
 			}
@@ -224,8 +231,9 @@ function mk_tree_fsm(host_name, state_name){
 			    });
 			},
 			off:(self, input)=>{
+			    console.log("NODE::ACTIONS:Removing.off: rm.exit: input", input);
 			    let result = input.result;
-			    // console.log("NODE::ACTIONS:Removing.off: rm.exit: input", input);
+			    
 			    if(result)
 				self.tree.rm_selected(false);
 			    else

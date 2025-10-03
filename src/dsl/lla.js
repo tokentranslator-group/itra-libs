@@ -25,22 +25,29 @@ export function ls_note(host_reducer, _id, on_succ){
 	 // console.log("PROBLEM: ls_note:data", data);
 
 	 // show only forward neighbors:
-	 on_succ(data[1]);});
+	 on_succ(data[1].map((n)=>({...n, protocol:host_reducer.data_protocol})));
+     });
 }
+
 
 // TODO: map to notes
 export function get(host_reducer, _id, on_succ){
     // get note from server by id:
     host_reducer.call("get", {id: _id, "table_type": "note"},
-		      (data)=>on_succ(data));
+		      (data)=>on_succ({...data, protocol: host_reducer.data_protocol}));
 }
+
 
 export function gets(host_reducer, data, on_succ){
     /*
      - ``data`` -- like:
      {value:"root", table_type: "note"}
      */
-    host_reducer.call("gets", data, (data)=>on_succ(data));
+
+    
+				        
+    host_reducer.call("gets", data, (data)=>on_succ(
+	data.map((n)=>({...n, protocol:host_reducer.data_protocol}))));
 }
 
 

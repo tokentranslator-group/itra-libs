@@ -25,6 +25,17 @@ import {gets, mk_notes, save, rm} from '../dsl/lla.js';
 const host_name = "GraphDb";
 const service_name = "graph_db";
 
+// graph_db protocol is same
+// as provocol_v0 (the data
+// recived alredy supported it),
+
+// internal data format protocol,
+// should be respected by all components and their behavior.
+const data_protocol_v0 = {
+	type:"internal",
+	name: "graph_db"
+    };
+
 
 // helper
 function run_host(){
@@ -47,7 +58,8 @@ function test_rm(){
     
     const reducer = new ServiceReducer({
 	host_name: host_name,
-	service_name: service_name});
+	service_name: service_name,
+	data_protocol: data_protocol_v0});
 
     mk_notes(reducer, [{value: "testing_rm0.lla"}, {value: "testing_rm1.lla"}],
 	     
@@ -228,8 +240,8 @@ function test_comp(){
 }
 
 export function main(){
-    test_rm();
+    // test_rm();
     // test_save();
-    // test_gets();
+    test_gets();
     // test_comp();
 }

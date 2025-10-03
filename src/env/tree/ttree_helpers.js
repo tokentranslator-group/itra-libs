@@ -35,7 +35,7 @@ function mk_tree_frame({storage_ref, name, host_name, data, actions}){
 	selector: (selected)=>{
 	    console.log(name+" selected:", selected);
 	    events.emit(host_name+".ActionsQueue", {fargs: {
-		action: "selected", input:selected}});
+		action: "selected", input:selected.map(n=>n.data)}});
 	},
 
 	menu_items: actions.menu.items,

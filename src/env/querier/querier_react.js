@@ -18,7 +18,9 @@ export function Querier({host_name, on_selected, on_deselected}){
     /*Left panel is a source one.
      Right panel is a destination one.
      On spawning the given selected will be put to the left panel
-     
+
+     All entries use internal format: {id, value, kind, tags, date}
+
      - ``on_selected`` -- (elm)=>{} - what to do for an clicked element
      (spawn editor)
 
@@ -48,9 +50,11 @@ export function Querier({host_name, on_selected, on_deselected}){
     useEffect(()=>{
 	
 	events.on(host_name+`.ActionsQueue`, ({event_type, args, trace})=>{
-	    console.log("selected data:", args);
-	    if(args.action=="fetch.exit")
+	    
+	    if(args.action=="fetch.exit"){
+		console.log("PROBLEM: querier.selected data:", args.input.entries);	
 		set_entries(args.input.entries);
+	    }
 	},{idd: on_show_idd});
 
 	return ()=>{
@@ -64,8 +68,8 @@ export function Querier({host_name, on_selected, on_deselected}){
     let Entries = entries.map(
 	(elm, idx)=>{
 	    // find current elm inside selected:
-	    let sel_idx = selected.findIndex(_elm=>_elm.title==elm.title);
-	    return <li
+	    let sel_idx = selected.findIndex(_elm=>_elm.id==elm.id);
+	    return <div
 	    key={idx.toString()}
 	    onClick={()=>{
 		let new_selected;
@@ -77,7 +81,7 @@ export function Querier({host_name, on_selected, on_deselected}){
 		else
 		    new_selected = [...selected, elm];
 	    
-		console.log("Querier.new_selected:", new_selected);
+		console.log("PROBLEM: Querier.new_selected:", new_selected);
 		events.emit(host_name+".ActionsQueue", {
 		    fargs: {action: "selected", input:new_selected},
 		    on_done: ()=>{
@@ -95,8 +99,14 @@ export function Querier({host_name, on_selected, on_deselected}){
 		});
 	    }}
 	    style={{background:(sel_idx<0)?"#AAAAAA":"#39414A", border:3, borderColor:"black"}}
-		>{elm.title}</li>;
-	});
+		>
+		<li>{"id: "+elm.id.toString()}</li>
+		<li>{"value: "+elm.value}</li>
+		<li>{"tags: "+elm.tags}</li>
+		<li>{"body: "+elm.body.slice(0, 30)}</li>
+		
+	    </div>;
+	});// TODO: fix format
     
     return(<div ref={el} className={"style_editor_dinamic editor_overflow"}
 	   style={{

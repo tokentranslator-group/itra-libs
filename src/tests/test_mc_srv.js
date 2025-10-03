@@ -12,11 +12,12 @@ import {events} from 'itra-behavior/src/eHandler.js';
 import {mk_core_comp_for_tree_fsm_v1} from '../env/tree/ttree_helpers.js';
 import {get_host_emulator} from './test_host.js';
 import {HostComponent} from '../env/host/host_react.js';
-import {mk_host_server, ServiceReducer,$_db_handler, sim_db_handler} from  '../env/host/host_server.js';
+import {ServiceReducer,$_db_handler, sim_db_handler} from  '../env/host/host_server.js';
 import {get_host} from './test_host_server.js';
 
 import {TreeComponent} from '../env/tree/ttree_react.js';
 import {apply_tree} from '../env/tree/ttree_helpers.js';
+
 
 import {EditorComponent} from '../env/editor/ttabs_react.js';
 // import {mk_editor_fsm} from '../env/editor/behavior.js';
@@ -34,15 +35,24 @@ const service_name = "graph_db";
 const tree_name = "LTree";
 const editor_name = "Editor";
 
+// internal data format protocol,
+// should be respected by all components and their behavior.
+const protocol_v0 = {
+    type:"internal",
+    name: "graph_db"
+};
+
 
 function TestMc({db_handler}){
     const reducer = new ServiceReducer({
 	host_name: host_name,
-	service_name: service_name});
+	service_name: service_name,
+	data_protocol: protocol_v0});
 
     const [tree_init_data, set_tree_init_data] = useState({children:[{title: "loading..."}]});
     useEffect(()=>{
 
+	
 	// load data from server and spawn the tree:
 	load_root(reducer, (data)=>{
 	    	
@@ -51,13 +61,31 @@ function TestMc({db_handler}){
 	});
 
 	// for querier:
-	fetch(reducer, (data)=>apply_tree(data).children);
+	fetch(reducer, (entries)=>entries);
+	// fetch(reducer, (data)=>apply_tree(data).children);
 
 	// for joiner:
-	join(reducer, (data)=>apply_tree(data).children);
+	join(reducer, ()=>{
+	    // update tree after joining done
+	    // load data from server and spawn the tree:
+	    load_root(reducer, (data)=>{
+	    	
+		events.emit("show."+tree_name, {
+		    fargs:{data:apply_tree(data)}});
+	    });			
+	});
 
-	// for saving:
-	save(reducer, map_editor_host, map_host_editor);
+	// for saving editor only:
+	save(reducer, ()=>{
+	    // update tree after saving done
+	    // load data from server and spawn the tree:
+	    load_root(reducer, (data)=>{
+	    	
+		events.emit("show."+tree_name, {
+		    fargs:{data:apply_tree(data)}});
+	    });			
+
+	});
 
 	
     },[]);
@@ -84,9 +112,12 @@ function TestMc({db_handler}){
 	on_selected={(elm)=>{
 	    console.log("PROBLEM map: elm:", elm);
 	    events.emit("show."+editor_name,{fargs:{data: {
-		tabs_ids: ["parser"],
-		tabs_contents: [elm.title],
-		field_tags: ["math"]}}});
+		// TODO: format here
+		tabs_ids: ["body", "date", "tags"],
+		tabs_contents: [elm.body, elm.date, elm.tags],
+		field_tags: elm.tags
+		// field_tags: elm.tags.split(",")
+	    }}});
 	}}
 	on_deselected={(elm)=>{
 	    events.emit("hide."+editor_name, {});
@@ -118,12 +149,18 @@ function TestMc({db_handler}){
 			    map_host_editor(node));
 		if(node.kind == "folder")
 		    activate(reducer, data.node.data.id, (nodes)=>{
-			console.log("PROBLEM: activate folder nodes:", nodes);
-
+			console.log("PROBLEM:hla.activate folder nodes:", nodes);
+			
+			
 			// for expanding current node:
 			data.node.fromDict({
 			    title: data.node.title,
-			    children: apply_tree(nodes).children
+			    children: apply_tree(nodes.map((n)=>{
+				
+				// recived msg protocol check: 
+				reducer.verify(tree_name, n);
+				return n;
+			    })).children
 			});	
 		    });
 		else
@@ -137,6 +174,7 @@ function TestMc({db_handler}){
 		    // the data he should fetch by itself!
 		    // or rather get(host, id, (node)=>emit(show,data:node))!
 		    events.emit("show."+editor_name,{
+			// TODO: use protocol
 			fargs:{data: map_host_editor(node)}});
 		    /*
 		    events.emit("show."+editor_name,{fargs:{data: {
@@ -216,9 +254,13 @@ function TestMc({db_handler}){
 		(tab_id, tab_content_text_id, _self)=>
 		    (e)=>{
 			console.log("Editor.save");
+		
+			let msg = map_editor_host(_self.data);
+			msg.protocol = protocol_v0;
 			events.emit(host_name+".ActionsQueue",
-				    {fargs: {action: "save",
-					    input: _self.data}});
+				    {fargs: {
+					action: "save",
+					input: msg}});
 
 		    },
 		(tab_id, tab_content_text_id, _self)=>
