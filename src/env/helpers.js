@@ -1,3 +1,12 @@
+function create_input({x, y, succ, init, tip}){
+    var txt = init;
+    txt = prompt(tip==undefined?"enter name":tip);
+    if(txt != ""){
+	succ(txt);
+    };
+};
+
+
 function throw_error(msg){
     throw new Error(msg);
 }
@@ -9,4 +18,4 @@ function check(name, options, attribute){
 }
 
 
-export {throw_error, check}
+export {create_input, throw_error, check}

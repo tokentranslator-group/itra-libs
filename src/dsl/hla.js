@@ -169,6 +169,7 @@ export function join(host_reducer, on_succ){
 		    (acc, parent)=>(
 			[...acc, ...children.map(
 			    (child)=>({
+				label: child.label,
 				_from: parent.id,
 				_to: child.id
 				//_from: parent.data.id,

@@ -27,7 +27,16 @@ export function Joiner({host_name}){
     var [state, set_state] = useState(true);
     const [left_selected, set_left_selected] = useState([]);
     const [right_selected, set_right_selected] = useState([]);
+    const [input_values, set_input_values] = useState([]);
+
+
+    function update_labels(selected){
+	// set up labels for edges
+	return selected.map(
+	    (elm, idx)=>elm.label!==undefined?elm.label:idx);
+    }
     
+
     useEffect(()=>{
 	console.log("Joiner: making resizable", el.current);
 	if(el.current!==undefined){
@@ -40,9 +49,16 @@ export function Joiner({host_name}){
     useEffect(()=>{
 	events.on(`show.`+name, ({event_type, args, trace})=>{
 	    console.log("selected data:", args);
-	    if (args.hasOwnProperty("data"))
+	    if (args.hasOwnProperty("data")){
+		let _selected = args.data["selected"];
+
+		// set up labels for edges:
+		let labels = update_labels(_selected);
+		set_input_values(labels);
+
 		// initial selection to the left panel
-		set_left_selected(args.data["selected"]);
+		set_left_selected(_selected);
+	    }
 	    set_show(true);
 	},{idd:`show.`+name});
 
@@ -56,8 +72,8 @@ export function Joiner({host_name}){
 	    }
 	};
     }, []);
-
-    // update selected according to state:
+    
+    // update selected according to state (left or rigth):
     useEffect(()=>{
 	
 	if(show){
@@ -66,7 +82,15 @@ export function Joiner({host_name}){
 	    console.log("selected: state.current!!!:", state);
 	    let set_selected = state?(selected)=>{
 		console.log("set up left selected: state:", state);
-		set_left_selected(selected);}:(selected)=>{
+
+		// set up labels for edges:
+		let labels = update_labels(selected);
+		set_input_values(labels);
+
+		set_left_selected(selected);
+
+
+	    }:(selected)=>{
 		    console.log("set up right selected: state", state);
 		    set_right_selected(selected);};
 	    
@@ -83,7 +107,15 @@ export function Joiner({host_name}){
 	};
     }, [show, state]);
     
+    
+
     let LeftPanel = left_selected.map((elm, idx)=><div key={idx.toString()}>
+				      <li><input
+				      type="text"
+				      value={input_values[idx]}
+				      onChange={(e)=>{
+					  set_input_values([...input_values.slice(0, idx), e.target.value, ...input_values.slice(idx+1)]);
+				      }}/> edge.label</li>
 				      <li>{"id: "+elm.id.toString()}</li>
 				      <li>{"value: "+elm.value}</li>
 				      <li>{"tags: "+elm.tags}</li>
@@ -99,11 +131,11 @@ export function Joiner({host_name}){
     if(show)
 	return(<div ref={el} className={"style_editor_dinamic editor_overflow"}>
 	       <p> {name} State: {state.toString()}</p>
-	       <p>Source</p>
+	       <p>Sources/Children</p>
 	       <ul>
 	       {LeftPanel}
 	       </ul>
-	       <p>Destination</p>
+	       <p>Destination/Parents</p>
 	       <ul>
 	       {RightPanel}
 	       </ul>
@@ -129,7 +161,10 @@ export function Joiner({host_name}){
 
 		   // send data to the host:
 		   events.emit(host_name+".ActionsQueue", {fargs:{
-		       action: "join.enter", input: {source: left_selected, destination: right_selected}}});
+		       action: "join.enter", input: {
+			   source: left_selected.map(
+			       (elm,idx)=>({...elm, label:input_values[idx]})),
+			   destination: right_selected}}});
 
 		   // close self
 		   set_show(false);
