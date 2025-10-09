@@ -35,6 +35,7 @@ export function Querier({host_name, on_selected, on_deselected}){
     const el = useRef();
 
     const [query, set_query] = useState("");
+    const [date, set_date] = useState();
     const [selected, set_selected] = useState([]);
     const [entries, set_entries] = useState([]);
 
@@ -103,6 +104,7 @@ export function Querier({host_name, on_selected, on_deselected}){
 		<li>{"id: "+elm.id.toString()}</li>
 		<li>{"value: "+elm.value}</li>
 		<li>{"tags: "+elm.tags}</li>
+		<li>{"date: "+elm.date}</li>
 		<li>{"body: "+elm.body.slice(0, 30)}</li>
 		
 	    </div>;
@@ -117,8 +119,20 @@ export function Querier({host_name, on_selected, on_deselected}){
 		"border-color": "black"
 		
 	    }}>
-	   <p>Query</p>
+	   <p>Query</p><br/>
+	   Tags:
 	   <input onChange={(e)=>set_query(e.target.value)}
+	   style={{
+	       "position":"absolute",
+	       "WebkitBoxSizing": "border-box",
+	       "MozBoxSizing": "border-box",
+	       "OBoxSizing": "border-box",
+	       "MsBoxSizing": "border-box",
+	       "BoxSizing": "border-box"}}
+	   /><br/>
+
+	   Date:
+	   <input onChange={(e)=>set_date(e.target.value)}
 	   style={{
 	       "position":"absolute",
 	       "WebkitBoxSizing": "border-box",
@@ -131,7 +145,9 @@ export function Querier({host_name, on_selected, on_deselected}){
 	   <button onClick={()=>{
 	       // send data to the host:
 	       events.emit(host_name+".ActionsQueue", {fargs:{
-		   action: "fetch.enter", input: {query: query}}});
+		   action: "fetch.enter", input: {
+		       query: query,
+		       date: date}}});
 	   }}>send</button><br/>
 	   
 	   <p>Query result</p>

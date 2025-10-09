@@ -216,7 +216,12 @@ export function fetch(host_reducer,on_succ){
 	({event_type, args, trace})=>{
 	    if(args.action=="fetch.enter")
 		host_reducer.call(
-		    "ls_tags", {tags: args.input.query.split(",")},
+		    "ls_tags", (args.input.date!==undefined)?{
+			tags: args.input.query.split(","),
+			date: args.input.date
+		    }:{
+			tags: args.input.query.split(",")
+		    },
 		    (nodes_list)=>{
 			events.emit(
 			    host_name+".ActionsQueue",
