@@ -10,12 +10,15 @@ import {get_host_emulator} from './test_host.js';
 import {HostComponent} from '../env/host/host_react.js';
 import {TreeComponent} from '../env/tree/ttree_react.js';
 
+
 const tree_name = "LTree";
 const host_name = "Host";
 
 
+
 function test_tree(core_comp_builder){
     /*Testing: Tree+Host; show/hide; some tree actions */
+
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(
 	    <div>
@@ -27,8 +30,11 @@ function test_tree(core_comp_builder){
 	    <TreeComponent 
 	name={tree_name}	
 	host_name={host_name}
-	core_comp_builder={(options)=>core_comp_builder(options)}
+
+	// use_data_converter so do not apply_tree to the data:
+	use_data_converter={false}
 	
+
 	data={{
 	    title: "available", key: "1", folder: true,
 	    children: [

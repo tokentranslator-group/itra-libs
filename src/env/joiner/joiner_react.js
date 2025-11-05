@@ -3,6 +3,7 @@ import {useState, useEffect, useRef} from 'react';
 import ReactDOM from 'react-dom';
 
 import {events} from 'itra-behavior/src/eHandler.js';
+import {cert_v0 as cert} from '../cert.js';
 
 import $ from 'jquery';
 import * as ui from 'jquery-ui';
@@ -12,6 +13,60 @@ import * as ui from 'jquery-ui';
 import 'jquery-ui/ui/widgets/resizable';
 import 'jquery-ui/ui/widgets/draggable';
 
+
+function internal_data_importer(data){
+    /*Transform single element, not list*/
+    cert.verify({
+	idd: "joiner",
+	msg: data,
+	data_form: "Single"
+    });
+    let internal_data = {
+
+	label:data.protocol.data_form == "Branch"?data.edge.label:undefined,
+	
+	original: data};
+
+    return internal_data;
+}
+
+function internal_data_exporter_dest(data){
+    return cert.sign({
+	idd: "joiner",
+	// the data.original having node since
+	// internal_data_importer required data_form == Single
+	msg: {node: data.original.node},
+	data_type: "Node",
+	data_form: "Single"
+    });
+}
+
+function internal_data_exporter_source(data){
+    /*Transform single data
+     data having label inside, which will be used as an edge.label*/
+    
+    if(!data.hasOwnProperty("label"))
+	throw new Error("ERROR: joiner.internal_data_exporter: data has no label! data:", data);
+
+    let external_data = data.original;
+    
+    if(external_data.protocol.data_form!="Branch"){
+	// add edge to node which alredy present there
+	// since internal_data_importer accept only Single
+	external_data.edge = {label: data.label};
+	external_data = cert.sign({
+	    idd: "joiner",
+	    msg: external_data,
+	    data_type: "Branch",
+	    data_form: "Single"
+	});
+    }
+    else{
+	external_data.edge.label = data.label;
+    }
+    
+    return external_data;
+}
 
 export function Joiner({host_name}){
     /*Left panel is a source one.
@@ -50,7 +105,7 @@ export function Joiner({host_name}){
 	events.on(`show.`+name, ({event_type, args, trace})=>{
 	    console.log("selected data:", args);
 	    if (args.hasOwnProperty("data")){
-		let _selected = args.data["selected"];
+		let _selected = args.data["selected"].map(elm=>internal_data_importer());
 
 		// set up labels for edges:
 		let labels = update_labels(_selected);
@@ -95,8 +150,10 @@ export function Joiner({host_name}){
 		    set_right_selected(selected);};
 	    
 	    events.on(host_name+".ActionsQueue", ({event_type, args, trace})=>{
-		if(args.action == "selected")
-		    set_selected(args.input);
+		if(args.action == "selected"){
+		    
+		    set_selected(args.input.map(elm=>internal_data_importer(elm)));
+		}
 	    }, {idd: `on_selected.`+name});
 	}
 	return ()=>{
@@ -116,16 +173,16 @@ export function Joiner({host_name}){
 				      onChange={(e)=>{
 					  set_input_values([...input_values.slice(0, idx), e.target.value, ...input_values.slice(idx+1)]);
 				      }}/> edge.label</li>
-				      <li>{"id: "+elm.id.toString()}</li>
-				      <li>{"value: "+elm.value}</li>
-				      <li>{"tags: "+elm.tags}</li>
-				      <li>{"body: "+elm.body.slice(0, 30)}</li>
+				      <li>{"id: "+elm.original.node.id.toString()}</li>
+				      <li>{"value: "+elm.original.node.value}</li>
+				      <li>{"tags: "+elm.original.node.tags}</li>
+				      <li>{"body: "+elm.original.node.body.slice(0, 30)}</li>
 				      </div>);
     let RightPanel = right_selected.map((elm, idx)=><div key={idx.toString()}>
-					<li>{"id: "+elm.id.toString()}</li>
-					<li>{"value: "+elm.value}</li>
-					<li>{"tags: "+elm.tags}</li>
-					<li>{"body: "+elm.body.slice(0, 30)}</li>
+					<li>{"id: "+elm.original.node.id.toString()}</li>
+					<li>{"value: "+elm.original.node.value}</li>
+					<li>{"tags: "+elm.original.node.tags}</li>
+					<li>{"body: "+elm.original.node.body.slice(0, 30)}</li>
 					</div>);
 
     if(show)
@@ -159,12 +216,18 @@ export function Joiner({host_name}){
 	       <button onClick={()=>{
 		   console.log("Editor.link");
 
-		   // send data to the host:
+		   // send data to the hla.join:
 		   events.emit(host_name+".ActionsQueue", {fargs:{
 		       action: "join.enter", input: {
 			   source: left_selected.map(
-			       (elm,idx)=>({...elm, label:input_values[idx]})),
-			   destination: right_selected}}});
+			       (elm,idx)=>({...elm, label:input_values[idx]})).map(elm=>internal_data_exporter_source(elm)),
+			   destination: right_selected.map(elm=>internal_data_exporter_dest(elm))}}});
+
+		   // clear all
+		   set_left_selected([]);
+		   set_right_selected([]);
+		   set_input_values([]);
+		   set_state(true);
 
 		   // close self
 		   set_show(false);

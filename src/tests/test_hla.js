@@ -19,7 +19,7 @@ import {HostComponent} from '../env/host/host_react.js';
 import {mk_host_server, ServiceReducer, $_db_handler} from  '../env/host/host_server.js';
 
 
-import {gets, mk_notes, save, rm} from '../dsl/lla.js';
+import {get, gets, mk_notes, save, rm} from '../dsl/lla.js';
 
 
 const host_name = "GraphDb";
@@ -122,12 +122,19 @@ function test_gets(){
 	     
 	     // replace all ids with notes:
 	     (notes_ids)=>{
-		 console.log("gets.lla: created notes_ids:", notes_ids);
+		 console.log("TEST:gets.lla: created notes_ids:", notes_ids);
 		 
-		 console.log("gets.lla: calling save...");
+		 console.log("TEST:gets.lla: calling save...");
 		 
 		 gets(reducer, {value:"testing_gets.lla", table_type: "note"},
-		      (data)=>console.log("gets.lla result:", data));
+		      (data)=>{
+			  console.log("TEST:gets.lla result:", data);
+			
+			  // get new node obj:
+			  get(reducer, data[0].id,
+			      (data)=>console.log("TEST:get.lla result:", data));
+			  
+		      });
 	     });
 }
 

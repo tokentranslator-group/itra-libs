@@ -3,6 +3,7 @@ import {useState, useEffect, useRef} from 'react';
 import ReactDOM from 'react-dom';
 
 import {events} from 'itra-behavior/src/eHandler.js';
+import {cert_v0 as cert} from '../cert.js';
 
 
 import $ from 'jquery';
@@ -84,7 +85,20 @@ export function Querier({host_name, on_selected, on_deselected}){
 	    
 		console.log("PROBLEM: Querier.new_selected:", new_selected);
 		events.emit(host_name+".ActionsQueue", {
-		    fargs: {action: "selected", input:new_selected},
+		    fargs: {
+			action: "selected",
+			
+			input: new_selected.map((elm)=>cert.sign({
+			    idd:"querier selected",
+
+			    // show only forward neighbors:
+			    msg: {node: elm},
+			  
+			    data_type:"Node",
+			    data_form: "Single"
+			}))
+			
+		    },
 		    on_done: ()=>{
 			// update all selected:
 
@@ -143,6 +157,10 @@ export function Querier({host_name, on_selected, on_deselected}){
 	   /><br/>
 
 	   <button onClick={()=>{
+	       // remove old:
+	       set_selected([]);
+	       set_entries([]);
+
 	       // send data to the host:
 	       events.emit(host_name+".ActionsQueue", {fargs:{
 		   action: "fetch.enter", input: {

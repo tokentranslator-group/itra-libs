@@ -135,6 +135,7 @@ function InnerComponent({core_comp_builder, name, host_name, data, actions,
 	    name: name,
 	    host_name: host_name,
 	    storage_ref: storage.current,
+	    // this data is for Frame, not relating to behavior it seems
 	    data: data,
 	    actions: actions
 	});
@@ -366,6 +367,7 @@ function OuterComponent(options){
 	init_data: options.data
     });
     console.log("ISSUE: show: show, data", [show, data]);
+    
     // this is necessary for FsmActionsViewer and FsmCurrentStateViewer:
     const [behavior, set_behavior] = useState();
 

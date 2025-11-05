@@ -3,6 +3,7 @@ import {mk_node, mk_fsm, mk_state, mk_state_ActionsQueue} from 'itra-behavior/sr
 import {IO as IOBase} from './TreeEdp.js';
 
 // import {mk_host_as_state} from '../../host/host_emulator.js';
+import {apply_tree} from '../ttree_helpers.js';
 
 
 
@@ -25,13 +26,25 @@ function mk_tree_fsm(host_name, state_name){
 	    
 	},
 
+	protocols: {
+	    on: (self, input)=>{
+		console.log("NODE::PROTOCOLS: Tree:on:input:", input);
+		console.log("NODE::PROTOCOLS: Tree:on:self:", self);
+		
+	    }},
+	
 	effects:{},
 
 	
-	// these been used only for mk_tree, rm_tree:
+	// these been used only for mk_tree, rm_tree, set_init_data:
 	stacks_spec:{
-	    names: ["ActionsQueue"],
+	    names: [
+		"ActionsQueue",
 
+		// Currently only ised in the Idle state
+		"DbgQueue"  
+	    ],
+	    
 	    // TODO: optional override of parent cb by current_state one 
 	    options:{ActionsQueue: {
 		inheretence: "always" // "newer" | "normal"
@@ -43,22 +56,52 @@ function mk_tree_fsm(host_name, state_name){
 	    // ignored!
 	    callbacks: {
 		ActionsQueue: (self, {event_type, args, trace})=>{
-		    
+		    /*
+		     Usage:
+		     events.emit(host_name+".ActionsQueue",
+				 {fargs: {
+				     action: "mk."+tree_name,
+				     input:{frame: tree_frame}}});
+
+		     // send init data to all:
+		     events.emit(host_name+".ActionsQueue",
+				 {fargs: {
+				     action: "set_init_data",
+				     input: {reducer:reducer}
+				 }});
+		     */
+
 		    // action, input, state
 		    let action_name = args.action;
 		    let input = args.input;
 		    let state = args.state;
 		    console.log("NODE::TreeFsm.ActionsQueue: reciving action:", action_name);
 		    switch(action_name){
+
+		    case "set_init_data":
+			if(input.hasOwnProperty("init_options")){
+			    Object.entries(self.states).forEach((state)=>{
+				
+				state[1].cert = input.cert;
+				
+			    });
+		
+			    self.cert = input.cert;
+			    
+			}
 			
+			break;
 		    case "mk."+state_name:
 			// update tree for each state:
 			Object.entries(self.states).forEach((state)=>{
 			    
 			    state[1].tree = input.frame;
+			    
 			});
 			
 			self.tree = input.frame;
+			// console.log("self.states", self.states);
+			
 			break;
 			
 		    case "rm."+state_name: self.tree.rm_tree();
@@ -86,7 +129,11 @@ function mk_tree_fsm(host_name, state_name){
 			
 			"add.tree.exit":(self, input)=>{
 			    console.log("NODE::ACTIONS:Tree:Adding add node tree after add.exit, with input:", input);
-			    let node = input.node;
+
+			    // converting reciving data to the tree format:
+			    let node = apply_tree(input.data).children;
+			    console.log("PROBLEM::Tree:Adding add node tree after add.exit, node:", node);
+			    // call frame original method:
 			    self.tree.add_node(node);	
 
 			    // send request to switch back to idle:
@@ -104,13 +151,13 @@ function mk_tree_fsm(host_name, state_name){
 			    // var x = self.tree.menu.offset[0];
 			    // var y = self.tree.menu.offset[1];
 			    
-			    self.tree.menu.input.create_input(x, y, (node_name)=>{
+			    self.tree.menu.input.create_input(x, y, (new_node_name)=>{
 				let parent_node = self.tree.get_selected_node();
 				let parents_list = self.tree.get_parents_list(parent_node);
 				// TODO: input.on_succ(data)
 				events.emit(host_name+".ActionsQueue", ({fargs:{
 				    action: "add.tree.enter", input: {
-					node_name: node_name,
+					new_node_name: new_node_name,
 	
 					parent_node: parent_node.data,
 					parents_list: parents_list
@@ -178,7 +225,7 @@ function mk_tree_fsm(host_name, state_name){
 
 		    protocols: {
 		    	on:(self, input)=>{
-			    
+			    console.log("PROBLEM:Joining.on,get_selected()",self.tree.get_selected());
 			    // TODO: input.on_succ(data)
 			    events.emit("show."+"Joiner",{
 				fargs:{
@@ -233,7 +280,7 @@ function mk_tree_fsm(host_name, state_name){
 			off:(self, input)=>{
 			    console.log("NODE::ACTIONS:Removing.off: rm.exit: input", input);
 			    let result = input.result;
-			    
+			    // if sere is some result
 			    if(result)
 				self.tree.rm_selected(false);
 			    else
@@ -249,7 +296,46 @@ function mk_tree_fsm(host_name, state_name){
 		builder: (parent_name)=> mk_state({
 		    host_name: parent_name,
 		    state_name: "Idle",
-		    stacks_spec: {names:[], callbacks:[]}
+		    stacks_spec: {
+			// in order to work, the parent fsm should also 
+			// support the DbgQueue.
+			names:["DbgQueue"], 
+			callbacks:{
+			    /*Just for testing:
+			     Usage:
+			     events.emit(host_name+".DbgQueue",
+				    {fargs: {
+					action: "test.add",
+					input:{
+					    data:{
+						title: "test.add",
+						// folder: true,
+						children: []}}}});
+			     */
+			    
+			    DbgQueue: (self,{event_type, args, trace})=>{	
+				// action, input, state
+				let action_name = args.action;
+				let input = args.input;
+				let state = args.state;
+				console.log("DBG:Tree:Idle.self", self);
+				console.log("DBG:Tree:Idle.action_name", action_name);
+				console.log("DBG:Tree:Idle.input", input);
+				switch(action_name){
+				case "test.add":
+				    self.tree.add_node(input.data);
+				    break;
+				case "test.select":
+				    console.log("DBG:Tree:Idle. test.select: self.tree.get_selected()",
+						self.tree.get_selected());
+				    
+				    break;
+				
+				}
+				
+			    }
+			}}
+		    // stacks_spec: {names:[], callbacks:[]}
 		})
 	    }]});
 }

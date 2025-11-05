@@ -9,7 +9,7 @@ import * as css3 from '../css/all.css';
 
 import {events} from 'itra-behavior/src/eHandler.js';
 
-import {mk_core_comp_for_tree_fsm_v1} from '../env/tree/ttree_helpers.js';
+// import {mk_core_comp_for_tree_fsm_v1} from '../env/tree/ttree_helpers.js';
 import {get_host_emulator} from './test_host.js';
 import {HostComponent} from '../env/host/host_react.js';
 import {ServiceReducer,$_db_handler, sim_db_handler} from  '../env/host/host_server.js';
@@ -30,34 +30,43 @@ import {Querier} from '../env/querier/querier_react.js';
 
 import {load_root, add, add_seq, activate, fetch, join, rm, save} from '../dsl/hla.js';
 
+// certificate for internal data exchange:
+import {cert_v0 as cert} from '../env/cert.js';
+
 const host_name = "GraphDb";
 const service_name = "graph_db";
 const tree_name = "LTree";
 const editor_name = "Editor";
 
-// internal data format protocol,
-// should be respected by all components and their behavior.
-const protocol_v0 = {
-    type:"internal",
-    name: "graph_db"
-};
 
 
 function TestMc({db_handler}){
     const reducer = new ServiceReducer({
 	host_name: host_name,
-	service_name: service_name,
-	data_protocol: protocol_v0});
+	service_name: service_name});
 
-    const [tree_init_data, set_tree_init_data] = useState({children:[{title: "loading..."}]});
+    const [tree_init_data, set_tree_init_data] = useState(
+	cert.sign({
+	    idd: "TestMc",
+	    msg: {entries:[{value: "loading..."}]},
+	    data_type: "Node",
+	    data_form: "Multi"
+	}));
+
     useEffect(()=>{
 
+	// send init data to all:
+	events.emit(host_name+".ActionsQueue",
+		    {fargs: {
+			action: "set_init_data",
+			input: {cert:cert}
+		    }});
 	
 	// load data from server and spawn the tree:
 	load_root(reducer, (data)=>{
 	    	
 	    events.emit("show."+tree_name, {
-		fargs:{data:apply_tree(data)}});
+		fargs:{data: data}});
 	});
 
 	// for querier:
@@ -71,7 +80,7 @@ function TestMc({db_handler}){
 	    load_root(reducer, (data)=>{
 	    	
 		events.emit("show."+tree_name, {
-		    fargs:{data:apply_tree(data)}});
+		    fargs:{data:data}});
 	    });			
 	});
 
@@ -82,7 +91,7 @@ function TestMc({db_handler}){
 	    load_root(reducer, (data)=>{
 	    	
 		events.emit("show."+tree_name, {
-		    fargs:{data:apply_tree(data)}});
+		    fargs:{data:data}});
 	    });			
 
 	});
@@ -135,36 +144,46 @@ function TestMc({db_handler}){
 	    <TreeComponent 
 	name={tree_name}	
 	host_name={host_name}
-	core_comp_builder={(options)=>mk_core_comp_for_tree_fsm_v1(options)}
+	
 	
 	data={tree_init_data}
 	show={false}
 	actions={{
 	    activate: (event, data) => {
-		console.log("clicked on: ", data.node);
-		let node = data.node.data;
-		console.log("PROBLEM: tree activate node:", node);
+		// data.node is fancytree node
+		// data.node.data.original is original data from db, which
+		// after having been recived from host was signed then
+		// with use of the internal data protocol
 
-		console.log("PROBLEM: tree activate map node:",
-			    map_host_editor(node));
-		if(node.kind == "folder")
-		    activate(reducer, data.node.data.id, (nodes)=>{
-			console.log("PROBLEM:hla.activate folder nodes:", nodes);
+		console.log("clicked on: ", data.node);
+		let node = data.node.data.original.node;
+		// console.log("PROBLEM: tree activate node:", node);
+		if(node.id == undefined)
+		    throw new Error("the trees data.node.data.note_id is undefined");
+		if(node.kind=="folder")
+		// if(data.node.folder || node.kind=="folder")
+		    activate(reducer, node.id, (entriesEdgeNode)=>{
+			// console.log("PROBLEM:hla.activate folder pairsEdgeNode:", entriesEdgeNode);
 			
 			
 			// for expanding current node:
 			data.node.fromDict({
 			    title: data.node.title,
-			    children: apply_tree(nodes.map((n)=>{
+			    // folder: true,
+			    children: apply_tree(entriesEdgeNode).children
+			    /*TODO:
+			    apply_tree(pairsEdgeNode.map((pair)=>{
 				
 				// recived msg protocol check: 
 				reducer.verify(tree_name, n);
 				return n;
-			    })).children
+			    })).children*/
 			});	
 		    });
-		else
-
+		else{
+		    console.log("PROBLEM: tree activate map node:",
+			    map_host_editor(node));
+		
 		    // alert("spawn editor");
 		    // spawn editor:
 		    // hide first then reopen again:
@@ -182,6 +201,7 @@ function TestMc({db_handler}){
 			tabs_contents: [node.body, node.kind, node.value],
 			field_tags: [node.tags]}}});*/
 		//   }});
+		}
 	    },
 	    //TODO: data_update: (),
 	    menu:{
@@ -200,7 +220,7 @@ function TestMc({db_handler}){
 			console.log("adding folder...");
 
 			// last param means folder:
-			add_seq(reducer, (note)=>apply_tree([note]).children[0], true);
+			add_seq(reducer, true);
 			// this also working:
 			// add(reducer, (note)=>apply_tree([note]).children[0], true);
 			// events.emit(host_name+".ActionsQueue",

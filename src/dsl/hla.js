@@ -3,6 +3,9 @@ import {unsubscribe} from 'itra-behavior/src/core/dsl/hlaEdpSeq.js';
 
 import {ls_note, get, gets, mk_edges, mk_notes, rm as _rm, save as _save} from './lla.js';
 
+import {cert_v0 as cert} from '../env/cert.js';
+
+
 const host_name = "GraphDb";
 const service_name = "graph_db";
 
@@ -116,7 +119,7 @@ export function rm(host_reducer){
 		    // recived msg protocol check: 
 		    // host_reducer.verify(hla_idd, node);
 		
-		    return node.id;}), (result)=>
+		    return node.note_id;}), (result)=>
 		    {
 		      events.emit(stack_name, 
 				  {
@@ -169,9 +172,9 @@ export function join(host_reducer, on_succ){
 		    (acc, parent)=>(
 			[...acc, ...children.map(
 			    (child)=>({
-				label: child.label,
-				_from: parent.id,
-				_to: child.id
+				label: child.edge.label,
+				_from: parent.node.id,
+				_to: child.node.id
 				//_from: parent.data.id,
 				//_to: child.data.id
 			    }))]), []);
@@ -321,9 +324,16 @@ function add_tree_enter(){
 }
 
 
-export function add_seq(host_reducer, apply_tree_for_node, folder){
+export function add_seq(host_reducer, folder){
     /*Sequential reimplementation of add
      Only work with a tree
+
+      Since the edges is interpreted as a links, the newly created
+     folder node will have same value as label of the edge firstly
+     attached to it. When such folder be copied (i.e new edge attached to it)
+     its name still be the same as its firstly created edge. Since
+     the activate hla is used a edges.labels
+     there should be no problem.
 
      Triggering event: `add.tree.enter`
      Args: // from fancytree
@@ -342,75 +352,135 @@ export function add_seq(host_reducer, apply_tree_for_node, folder){
     // mk_notes:
     events.on(stack_name,
 	      ({event_type, args, trace})=>{
-		  if(args.action=="add.tree.enter")
+		  if(args.action=="add.tree.enter"){
+		      let state = args.input;
+
+		      // create a child:
+		      let new_node = {
+			  // TODO: adjust format value?body:
+	
+			  // the name of the new node will be same as
+			  // the label of its first edge.label
+			  value: state.new_node_name,
+			  kind: folder?"folder":"note"};
 		  
-		      // create child:
 		      mk_notes(
 			  host_reducer,
-			  [{
-			      // TODO: adjust format value?body:
-			      value: args.input.node_name,
-			      kind: folder?"folder":"note"}],
+			  [new_node],
 
 			  (notes_ids)=>{
 			      events.emit(hla_idd+0, {
 				  fargs:{
-				      input: args.input,
-				      notes_ids:notes_ids},
+				      // update the state:
+				      input: {...state, notes_ids:notes_ids}
+				  },
 			      on_done: (trace)=>unsubscribe(stack_name, hla_idd)});
 			  });
+		  }
 	      }, {idd: hla_idd});
     
     // mk_edges:
     events.on(hla_idd+0, ({event_type, args, trace})=>{
-	let notes_ids = args.notes_ids;
+	let state = args.input;
+	let new_node_name = state.new_node_name;
+	let notes_ids = state.notes_ids;
 	const child_id = notes_ids[0];
 	
-	// connect child to parent:
+	// connect parent to child:
+	let new_edge = {
+	    // the name of the new node will be same as the label of its
+	    // first edge.label
+	    label: new_node_name,
+	    _from: state.parent_node.note_id,
+	    _to:child_id};
+
+	// create an edge:
 	mk_edges(
 	    host_reducer,
-	    [{_from: args.input.parent_node.id,
-	      _to:child_id}],
-	    (data_edges)=>events.emit(hla_idd+1, {
-		fargs:{data_edges:data_edges, child_id: child_id},
+	    [new_edge],
+	    (edges_ids)=>events.emit(hla_idd+1, {
+		fargs:{
+		    // extend the state with new edge id:
+		    input: {...state, edge_id:edges_ids[0], child_id: child_id}},
 		on_done: (trace)=>unsubscribe(hla_idd+0, hla_idd)}));
 	    
     }, {idd: hla_idd});
 
-    // get:
+    // get new node:
     events.on(hla_idd+1, ({event_type, args, trace})=>{
-	let data_edges = args.data_edges;
-	const child_id = args.child_id;
-		
+	let state = args.input;
+	// let edge_id = state.edge_id;
+	// const parent_id = state.parent_node.id;
+	let child_id = state.child_id;
+
 	// get new node obj:
 	get(
 	    host_reducer, child_id,
-	    (data_get_child)=>events.emit(hla_idd+2, {
-		fargs:{data_get_child:data_get_child},
-		on_done: (trace)=>unsubscribe(hla_idd+1, hla_idd)}));
+	    (child_node)=>events.emit(hla_idd+2, {
+
+		// extend the state with child_node:
+		fargs:{input: {...state, child_node:child_node}},
+		on_done: (trace)=>unsubscribe(hla_idd+1, hla_idd)}),
+	    "note");
 	    
     }, {idd: hla_idd});
 
-
-    // finally:
+    // get new edge:
     events.on(hla_idd+2, ({event_type, args, trace})=>{
-	let data_get_child = args.data_get_child;
-		
+	let state = args.input;
+	let edge_id = state.edge_id;
+	// const parent_id = state.parent_node.id;
+	// let child_id = state.child_id;
+
+	// get new edge obj:
+	get(
+	    host_reducer, edge_id,
+	    (child_edge)=>events.emit(hla_idd+3, {
+
+		// extend state with child_edge:
+		fargs:{input: {...state, child_edge:child_edge}},
+		on_done: (trace)=>unsubscribe(hla_idd+2, hla_idd)}),
+	    "edge");
+	    
+    }, {idd: hla_idd});
+
+    // sign the date with internal protocol:
+    events.on(hla_idd+3, ({event_type, args, trace})=>{
+	let state = args.input;
+	let new_node = state.child_node;
+	let new_edge = state.child_edge;
+	
+	let msg = cert.sign({
+	     idd:"hla.add_seq",
+
+	     // show only forward neighbors:
+	     msg: {entries: [[new_edge, new_node]]},
+	     // msg: {entries: data[1]},
+
+	     data_type:"Branch",
+	     data_form: "Multi"
+	 });
+
+	// console.log("PROBLEM: hla.add_seq, msg:", msg);
+
 	// finally:
+	// send new branch(=(edge, node)) back to tree:
 	events.emit(
 	    host_name+".ActionsQueue",
 	    {
 		fargs:{
 		    // trigger tree fsm
 		    action:"add.tree.exit",
-		    input: {node: apply_tree_for_node(data_get_child)}},
+		    input: {data: msg}},
 		
-		on_done: (trace)=>unsubscribe(hla_idd+2, hla_idd)
+		on_done: (trace)=>unsubscribe(hla_idd+3, hla_idd)
 	    });
 	
     }, {idd: hla_idd});
 
-    // calling tree.add
+    // and only now run:
+    // calling tree.add to send tree to Adding state 
+    // and emit add.tree.enter event which will start a chain defined above:
     events.emit(host_name+".ActionsQueue",
 		{
 		    fargs: {action: "add"}
@@ -445,7 +515,7 @@ export function add(host_reducer, apply_tree_for_node, folder){
 			  host_reducer,
 			  // TODO: adjust format value?body:
 			  [{
-			      value: args.input.node_name,
+
 			      kind: folder?"folder":"note"}],
 			  (notes_ids)=>{
 			      const child_id = notes_ids[0];
@@ -454,6 +524,7 @@ export function add(host_reducer, apply_tree_for_node, folder){
 			      mk_edges(
 				  host_reducer,
 				  [{
+				      label: args.input.node_name,
 				      _from: args.input.parent_node.id,
 				      _to:child_id
 				  }],
@@ -509,14 +580,25 @@ export function load_root(host_reducer, on_succ){
 	     if(data.length == 0)
 		 
 		 // create root node if not exist
-		 // TODO: adjust format value?body:		 
 		 mk_notes(host_reducer, [{value: "root", kind:"folder"}],
 			  
 			  // replace all ids with notes:
 			  (notes_ids)=>
-			  map_to_notes(host_reducer, notes_ids, on_succ));
+			  map_to_notes(
+			      host_reducer, notes_ids,
+			      (data)=>on_succ(cert.sign({
+				  idd: "load_root",
+				  msg: {entries: data},
+				  data_type: "Node",
+				  data_form: "Multi"
+			      }))));
 	     else
-		 on_succ(data);
+		 on_succ(cert.sign({
+		     idd: "load_root",
+		     msg: {entries: data},
+		     data_type: "Node",
+		     data_form: "Multi"
+		 }));
 	 });
 }
 
@@ -540,7 +622,9 @@ export function map_to_notes(host_reducer, ids, on_succ, result){
 
 
 export function activate(host_reducer, id, on_succ){
-    /*Get node with id from host*/
+    /*For the node with id get its connected children (not parents!) branches,
+     ie (child_edge, child_node) with id from host. Will work only if
+     node.kind == "folder".*/
 
     get(host_reducer, id, (data)=>{
 	if(data.kind == "folder")

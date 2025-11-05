@@ -15,7 +15,7 @@ import {Tree, sort_children} from './env/tree/ttree.js';
 // import {main} from './tests/test_hla.js';
 import {main} from './tests/test_mc_srv.js';
 // import {main} from './tests/test_host_server.js';
-// import {main} from './tests/test_mc.js';
+// import {main} from './tests/test_mc.js';  // TODO
 // import {main} from './tests/test_host.js';
 // import {main} from './tests/test_editor.js';
 // import {main} from './tests/test_editor_react.js';

@@ -1,3 +1,5 @@
+import {cert_v0 as cert} from '../env/cert.js';
+
 // lla-s:
 export function rm(host_reducer, ids, on_succ){
     
@@ -23,19 +25,32 @@ export function save(host_reducer, data, on_succ){
 export function ls_note(host_reducer, _id, on_succ){
      host_reducer.call("ls", {id: _id}, (data)=>{
 	 // console.log("PROBLEM: ls_note:data", data);
+	 let children_branches = data["[[Obj], [Obj]]"][1];
 
-	 // show only forward neighbors:
-	 on_succ(data[1].map((n)=>({...n, protocol:host_reducer.data_protocol})));
+	 let msg = cert.sign({
+	     idd:"lla.ls_note",
+
+	     // show only forward neighbors:
+	     msg: {entries: children_branches},
+	     // msg: {entries: data[1]},
+
+	     data_type:"Branch",
+	     data_form: "Multi"
+	 });
+	 
+	 on_succ(msg);
      });
 }
 
 
 // TODO: map to notes
-export function get(host_reducer, _id, on_succ){
+export function get(host_reducer, _id, on_succ, table_type){
+    table_type = (table_type==undefined)?"note":table_type;
     // get note from server by id:
-    host_reducer.call("get", {id: _id, "table_type": "note"},
+    host_reducer.call("get", {id: _id, "table_type": table_type},
 		      (data)=>on_succ({...data, protocol: host_reducer.data_protocol}));
 }
+
 
 
 export function gets(host_reducer, data, on_succ){

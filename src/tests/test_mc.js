@@ -9,7 +9,7 @@ import * as css3 from '../css/all.css';
 
 import {events} from 'itra-behavior/src/eHandler.js';
 
-import {mk_core_comp_for_tree_fsm_v1} from '../env/tree/ttree_helpers.js';
+// import {mk_core_comp_for_tree_fsm_v1} from '../env/tree/ttree_helpers.js';
 import {get_host_emulator} from './test_host.js';
 import {HostComponent} from '../env/host/host_react.js';
 import {TreeComponent} from '../env/tree/ttree_react.js';
@@ -55,9 +55,12 @@ function test_mc(){
 
 	    <TreeComponent 
 	name={tree_name}	
+
 	host_name={host_name}
-	core_comp_builder={(options)=>mk_core_comp_for_tree_fsm_v1(options)}
-	
+
+	// use_data_converter so do not apply_tree to the data:
+	use_data_converter={false}
+
 	data={{
 	    title: "available", key: "1", folder: true,
 	    children: [
