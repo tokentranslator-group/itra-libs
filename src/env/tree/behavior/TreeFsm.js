@@ -278,8 +278,7 @@ function mk_tree_fsm(host_name, state_name){
 			    self.tree.menu.input.create_input(x, y, (new_node_name)=>{
 				let sel_node = self.tree.get_selected_node();
 
-
-				// TODO: input.on_succ(data)
+				// send new name and sel_node to hla.rename: 
 				events.emit(host_name+".ActionsQueue", ({fargs:{
 				    action: "rename.tree.enter", input: {
 					new_node_name: new_node_name,
@@ -303,12 +302,14 @@ function mk_tree_fsm(host_name, state_name){
 			    });
 			    
 			    sel_node.data.original.edge.label = data.edge.label;
+			    
 			    // converting reciving data to the tree format:
 			    // let node = apply_tree(input.data).children;
-			    console.log("PROBLEM::Tree:Renaming add node tree after add.exit, sel_node:", sel_node);
+			    // console.log("PROBLEM::Tree:Renaming add node tree after add.exit, sel_node:", sel_node);
 			    // call frame original method:
 			    // self.tree.add_node(node);	
-			    console.log("PROBLEM::Tree:Renaming sel_node:", self.tree.get_selected_node());
+			    
+			    // console.log("PROBLEM::Tree:Renaming sel_node:", self.tree.get_selected_node());
 
 			    sel_node.setTitle(data.edge.label);
 			}

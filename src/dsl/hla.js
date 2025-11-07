@@ -55,8 +55,9 @@ export function rename(host_reducer){
      Triggering event: `rename.tree.enter`
      args:
         args.input.data::Dict
-        args.input.new_node_name
-        args.input.sel_node
+        args.input.new_node_name::Str
+        args.input.sel_node::Dict
+
      Exiting event: `rename.tree.exit`
      */
 

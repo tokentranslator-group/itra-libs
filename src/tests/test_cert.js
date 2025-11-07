@@ -145,6 +145,7 @@ function test1(){
 	data_form: "Single",
 	msg: {edge: {}}
     });
+    console.log(" signed edge:", signed_e);
     cert.verify({
 	idd: "cert.test1.verify",
 	msg: signed_e,

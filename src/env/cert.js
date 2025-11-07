@@ -1,7 +1,7 @@
 /*Define the internal data protocol/certificate currently to be used
 in all itra data exchange tasks*/
 
-// internal data format protocol,
+// Internal data format protocol,
 // should be respected by all components and their behavior.
 const protocol_v0 = {
     type:"internal",
@@ -9,6 +9,19 @@ const protocol_v0 = {
 };
 
 class Certificate{
+    /*There is internal data protocol which been checked for
+     each hla and should be respected/supported by all components
+     and their behavior.
+	 
+     So each msg should looks like
+	    {
+	     node:{...}
+	     edge:{...}
+	     protocol: protocol_v0,
+	    }
+
+     see test_cert.js
+     */
     constructor({data_protocol}){
 	
 	this.data_protocol = data_protocol;
@@ -19,27 +32,11 @@ class Certificate{
     verify({idd, msg, data_type, data_form}){
 	/*Verify that internal data format protocol spec hold for a msg in
 	 hla with hla_idd
-    
-	 There is internal data protocol which been checked for
-	 each hla and 
-	 should be respected by all components and their behavior.
-	 
-	 So each msg.input should looks like
-	 {
-	 id: ...,
-	 ...
-	 protocol: protocol_v0,
-	 }
-	 // graph_db protocol is same
-	 // as provocol_v0 (the data
-	 // recived alredy supported it),
-	 
-	 // internal data format protocol,
-	 // should be respected by all components and their behavior.
 	 
 	 - ``idd`` -- identifier of the component using this verification
+	 will be used in errors messages
 	 
-	 - ``msg`` -- the data to be verified
+	 - ``msg`` -- the data to be verified. Should contain a protocol attr.
 	 
 	 - ``data_form`` -- Multi (ie List) or Single (ie entry).
 	 In the former case the msg has to have
@@ -55,7 +52,7 @@ class Certificate{
 	    msg: data,
 	    data_form: "Single"
 	 });
-
+	 
 	 */
 	const protocol = this.data_protocol;
 
@@ -77,9 +74,8 @@ class Certificate{
 	    console.error("verify._check_data error:", error.message);
 	    console.log("VerificationError msg:", msg);
 	} 
-
 	
-	//if(data_type!==undefined && msg.protocol.data_type!==data_type){
+
 	if(data_type!==undefined){
 	    let data_type_correct = this._type_tester(data_type, msg.protocol.data_type);
 	    if(!data_type_correct){
@@ -96,24 +92,18 @@ class Certificate{
 	
 	
 	if(data_form=="Single" && msg.protocol.data_type=="Node" && !msg.hasOwnProperty("node")){
-	//if(data_type!==undefined){
-	//    let has_node = this._type_tester(msg.protocol.data_type, "Node") || this._type_tester(msg.protocol.data_type, "Branch"); 
-
-	    //  if(data_form=="Single" && has_node && !msg.hasOwnProperty("node")){
 		console.log("VerificationError msg:", msg);
 		console.log("VerificationError data_form:", data_form);
 		throw new Error(idd+" "+"protocol data_form verification failure! no node given in the msg");	    
 	    }
 	    
-	    //let has_edge = this._type_tester(data_type, "Edge") || this._type_tester(data_type, "Branch");  
 	if(data_form=="Single" && msg.protocol.data_type=="Edge" && !msg.hasOwnProperty("edge")){
 	    
-	//    if(data_form=="Single" && has_edge && !msg.hasOwnProperty("edge")){	    
 		console.log("VerificationError msg:", msg);
 		console.log("VerificationError data_form:", data_form);
 		throw new Error(idd+" "+"protocol data_form verification failure! no edge given in the msg");	    
 	    }
-	//}
+	
 	if(data_form=="Single" && msg.protocol.data_type=="Branch" && (!msg.hasOwnProperty("edge")||!msg.hasOwnProperty("node"))){
 	    console.log("VerificationError msg:", msg);
 	    console.log("VerificationError data_form:", data_form);
@@ -129,7 +119,8 @@ class Certificate{
 	  |node attr, if data_type is Node
 	  |edge attr, if data_type is Edge
 	  |both node and edge, if data_type is Branch
-	 if the `data_form` has `Multi` as its value, the msg should have
+
+	 If the `data_form` has `Multi` as its value, the msg should have
 	 the entries list which contain:
 	  |(edge, node) pairs, if `data_type` is `Branch`
 	  | edge obj/dict, if `data_type` is `Edge`
@@ -153,6 +144,7 @@ class Certificate{
 	     data_form: "Multi"
 	 });
 
+	 see test_cert.js
 	 */
 	msg.protocol = {...this.data_protocol};
 	msg.protocol.data_type = data_type;
@@ -181,7 +173,6 @@ class Certificate{
 		break;
 		
 	    }
-		
 	
 	msg.protocol.data_form = data_form;
 	msg.protocol.owner = idd;
@@ -189,13 +180,15 @@ class Certificate{
     }
 
     _type_tester(data_type, type_value){
-	// data_type - is a user query
-	// type_value - is what the data actual have
+	/*
+	 - ``data_type`` -- is a user query
+	 - ``type_value`` -- is what the data actual have
 
-	// to check if there is the `type_value` inside `data_type`.
-	// The latter could looks like "Edge" or "Edge,Branch".
-	// If type_value is Branch, the data_type = "Edge,Node" will
-	// also return true
+	  To check if there is the `type_value` inside `data_type`.
+	 The latter could looks like "Edge" or "Edge,Branch".
+	  If type_value is Branch, the data_type = "Edge,Node" will
+	 also return true
+	 */
 	let res = data_type.split(",").findIndex(_type=>_type==type_value)>=0;
 
 	if(type_value=="Branch" && !res)

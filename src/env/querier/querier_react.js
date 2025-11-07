@@ -41,6 +41,10 @@ export function Querier({host_name, on_selected, on_deselected}){
     const [selected, set_selected] = useState([]);
     const [entries, set_entries] = useState([]);
 
+    // info to inform user about the result being changed somewhere
+    // else and so the data is no longer reliable:
+    const [info, set_info] = useState("");
+
     useEffect(()=>{
 	console.log("Querier: making resizable", el.current);
 	if(el.current!==undefined){
@@ -58,6 +62,7 @@ export function Querier({host_name, on_selected, on_deselected}){
 	    if(args.action=="fetch.exit"){
 		console.log("PROBLEM: querier.selected data:", args.input.entries);	
 		set_entries(args.input.entries);
+		set_info("done");
 	    }
 	},{idd: on_show_idd});
 
@@ -73,7 +78,7 @@ export function Querier({host_name, on_selected, on_deselected}){
 	events.on(host_name+`.ActionsQueue`, ({event_type, args, trace})=>{
 	    
 	    if(args.action=="fetch.update"){
-		fetch(query, date);
+		set_info("Warning: data was changed outside and no longer should be rely upon!");
 	    }
 	},{idd: on_update_idd});
 
@@ -82,7 +87,7 @@ export function Querier({host_name, on_selected, on_deselected}){
 		events.off(host_name+`.ActionsQueue`, {idd: on_update_idd});
 	    }
 	};
-    }, [query]);
+    }, []);
 
     // TODO: onClick, onRightClick, 
     let Entries = entries.map(
@@ -201,7 +206,8 @@ export function Querier({host_name, on_selected, on_deselected}){
 	   /><br/>
 
 	   <button onClick={()=>fetch(query, date)}>send</button><br/>
-	   
+	   Status: {info}<br/>
+
 	   <p>Query result</p>
 	   <ul style={{
 	       position: "inhereted",

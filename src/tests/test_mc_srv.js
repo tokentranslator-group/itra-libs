@@ -91,7 +91,7 @@ function TestMc({db_handler}){
 	    events.emit(host_name+`.ActionsQueue`, {
 		fargs:{action:"fetch.update"},
 	    on_done: (trace)=>{console.log("PROBLEM: fetch.update");}});
-
+	    /*
 	    // update tree after saving done
 	    // load data from server and spawn the tree:
 	    load_root(reducer, (data)=>{
@@ -99,7 +99,7 @@ function TestMc({db_handler}){
 		events.emit("show."+tree_name, {
 		    fargs:{data:data}});
 	    });		
-
+	    */
 	});
 	
 	rename(reducer);

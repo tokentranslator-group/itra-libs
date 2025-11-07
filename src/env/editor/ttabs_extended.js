@@ -142,6 +142,7 @@ ETabs.prototype.create_tabs = function(){
     var tags_succ = function(tags){
 	$("#"+self.get_field_tags_id()).text(tags);
 	self.tags.data["field_tags"] = tags;
+	self.data["field_tags"] = self.tags.data["field_tags"];
     };
     self.tags.apply_tags(tags_succ);
     // END FOR
