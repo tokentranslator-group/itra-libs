@@ -44,6 +44,104 @@ export function cont01(host_reducer, data, on_succ, root){
 
 // hla-s:
 // all should respect the internal format spec
+export function rename(host_reducer){
+    /*
+     Registering for rename.
+     So rename(host) will not saving anything 
+
+     Renaming meddiator
+     No need for unregistering since used only once in init
+
+     Triggering event: `rename.tree.enter`
+     args:
+        args.input.data::Dict
+        args.input.new_node_name
+        args.input.sel_node
+     Exiting event: `rename.tree.exit`
+     */
+
+    let hla_idd = "HlaEdpSeq.rename";
+
+    events.on(
+	stack_name,
+	({event_type, args, trace})=>{
+	    
+	    if(args.action=="rename.tree.enter"){
+		let new_node_name = args.input.new_node_name;
+		let data = args.input.data;
+		let sel_node = args.input.sel_node;
+
+		/* // For testing without the host:
+		//just send him the data, he will update it 
+		//data.edge.label = new_node_name;
+		let reciving_edge = {label: new_node_name};
+		
+		events.emit(host_name+".ActionsQueue", {
+		    fargs: {
+			action: "rename.tree.exit",
+			
+			input:{
+			    sel_node:sel_node,
+			    data: cert.sign({
+				idd:"hla.rename",
+				data_type:"Edge",
+				data_form: "Single",
+				msg: {edge: reciving_edge}
+			    })
+			}},
+				    
+		    on_done: (trace)=>{
+			// on_succ()
+			console.log("Host: rename.exit done");
+		    }});
+
+		*/
+		cert.verify({
+		    idd: "hla.rename",
+		    msg: data,
+		    data_form: "Single",
+		    data_type: "Edge,Branch"
+		});
+		data.edge.label = new_node_name;
+		_save(
+		    host_reducer,
+		    data.edge,
+		    (result)=>{
+			if(result)
+			    // fetch updated results:
+			    get(host_reducer, data.edge.id, (data)=>{
+
+				console.log("PROBLEM: rename: data", data);
+						
+				events.emit(host_name+".ActionsQueue", {
+				    fargs: {
+					action: "rename.tree.exit",
+
+					input:{
+					    sel_node: sel_node,
+					    data:cert.sign({
+						idd:"hla.rename",
+						
+						// just edge is need
+						//  to be checked here:
+						data_type:"Edge",
+
+						data_form: "Single",
+						msg: {edge: data}
+					    })
+					}},
+				    
+				    on_done: (trace)=>{
+					// on_succ()
+					console.log("Host: rename.exit done");
+				}});
+			    }, "edge");
+		    }, "edge");
+	    }
+	}, {idd: hla_idd});
+}
+
+
 export function save(host_reducer, on_succ){
     /*
      Registering for save.
@@ -54,6 +152,7 @@ export function save(host_reducer, on_succ){
 
      Triggering event: `save.enter`
      args: args.input.data::Dict
+     Exiting event: `save.exit`
      */
 
     let hla_idd = "HlaEdpSeq.save";
@@ -69,21 +168,34 @@ export function save(host_reducer, on_succ){
 		//host_reducer.verify(hla_idd, args.input);
 
 		let data = args.input;
+		cert.verify({
+		    idd: "hla.save",
+		    msg: data,
+		    data_form: "Single",
+		    data_type: "Node"
+		});
+
 		console.log("PROBLEM:protocol: save.enter:", data);
 		_save(
 		    host_reducer,
-		    data,
+		    data.node,
 		    (result)=>{
 			if(result)
 			    // fetch updated results:
-			    get(host_reducer, data.id, (data)=>{
+			    get(host_reducer, data.node.id, (data)=>{
 
-				let msg = data;
 				console.log("PROBLEM: saving: data", data);
+
 				events.emit(host_name+".ActionsQueue", {
 				    fargs: {
 					action: "save.exit",
-					input: msg},
+
+					input: cert.sign({
+					    idd:"hla.save",
+					    data_type:"Node",
+					    data_form: "Single",
+					    msg: {node: data}
+					})},
 				    
 				    on_done: (trace)=>{
 					on_succ()
@@ -207,9 +319,10 @@ export function fetch(host_reducer,on_succ){
      Triggering event: `fetch.enter`
      args: // from querier:
       args.input.query::String // will be used as tags
-
+     
      return:
        input.entries:: Dict
+       fetch.exit
      */
 
     let hla_idd = "HlaEdpSeq.fetch";
@@ -217,6 +330,8 @@ export function fetch(host_reducer,on_succ){
     events.on(
 	stack_name,
 	({event_type, args, trace})=>{
+	    if(args.action=="fetch.enter")
+		console.log("PROBLEM: HlaEdpSeq.fetch");
 	    if(args.action=="fetch.enter")
 		host_reducer.call(
 		    "ls_tags", (args.input.date!==undefined)?{
@@ -226,6 +341,7 @@ export function fetch(host_reducer,on_succ){
 			tags: args.input.query.split(",")
 		    },
 		    (nodes_list)=>{
+			console.log("PROBLEM: HlaEdpSeq.fetch1");
 			events.emit(
 			    host_name+".ActionsQueue",
 			    {

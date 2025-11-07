@@ -21,14 +21,14 @@ import {apply_tree} from '../env/tree/ttree_helpers.js';
 
 import {EditorComponent} from '../env/editor/ttabs_react.js';
 // import {mk_editor_fsm} from '../env/editor/behavior.js';
-import {mk_core_comp_for_editor_fsm_v1, map_host_editor, map_editor_host} from '../env/editor/ttabs_helpers.js';
+import {mk_core_comp_for_editor_fsm_v1, map_cert_editor} from '../env/editor/ttabs_helpers.js';
 
 import {Joiner} from '../env/joiner/joiner_react.js';
 
 
 import {Querier} from '../env/querier/querier_react.js';
 
-import {load_root, add, add_seq, activate, fetch, join, rm, save} from '../dsl/hla.js';
+import {load_root, add, add_seq, activate, fetch, join, rm, save, rename} from '../dsl/hla.js';
 
 // certificate for internal data exchange:
 import {cert_v0 as cert} from '../env/cert.js';
@@ -86,15 +86,23 @@ function TestMc({db_handler}){
 
 	// for saving editor only:
 	save(reducer, ()=>{
+	    	
+	    // update querier:
+	    events.emit(host_name+`.ActionsQueue`, {
+		fargs:{action:"fetch.update"},
+	    on_done: (trace)=>{console.log("PROBLEM: fetch.update");}});
+
 	    // update tree after saving done
 	    // load data from server and spawn the tree:
 	    load_root(reducer, (data)=>{
-	    	
+	    	console.log("PROBLEM: tree fetch.update");
 		events.emit("show."+tree_name, {
 		    fargs:{data:data}});
-	    });			
+	    });		
 
 	});
+	
+	rename(reducer);
 
 	
     },[]);
@@ -120,13 +128,10 @@ function TestMc({db_handler}){
 	    <Querier host_name={host_name}
 	on_selected={(elm)=>{
 	    console.log("PROBLEM map: elm:", elm);
-	    events.emit("show."+editor_name,{fargs:{data: {
-		// TODO: format here
-		tabs_ids: ["body", "date", "tags"],
-		tabs_contents: [elm.body, elm.date, elm.tags],
-		field_tags: elm.tags
-		// field_tags: elm.tags.split(",")
-	    }}});
+	    // TODO:
+	    events.emit("show."+editor_name,
+			{fargs:{data: map_cert_editor(elm)}});
+
 	}}
 	on_deselected={(elm)=>{
 	    events.emit("hide."+editor_name, {});
@@ -156,7 +161,8 @@ function TestMc({db_handler}){
 		// with use of the internal data protocol
 
 		console.log("clicked on: ", data.node);
-		let node = data.node.data.original.node;
+		let data_original = data.node.data.original;
+		let node = data_original.node;
 		// console.log("PROBLEM: tree activate node:", node);
 		if(node.id == undefined)
 		    throw new Error("the trees data.node.data.note_id is undefined");
@@ -164,7 +170,6 @@ function TestMc({db_handler}){
 		// if(data.node.folder || node.kind=="folder")
 		    activate(reducer, node.id, (entriesEdgeNode)=>{
 			// console.log("PROBLEM:hla.activate folder pairsEdgeNode:", entriesEdgeNode);
-			
 			
 			// for expanding current node:
 			data.node.fromDict({
@@ -182,7 +187,7 @@ function TestMc({db_handler}){
 		    });
 		else{
 		    console.log("PROBLEM: tree activate map node:",
-			    map_host_editor(node));
+			    map_cert_editor(data_original));
 		
 		    // alert("spawn editor");
 		    // spawn editor:
@@ -194,7 +199,7 @@ function TestMc({db_handler}){
 		    // or rather get(host, id, (node)=>emit(show,data:node))!
 		    events.emit("show."+editor_name,{
 			// TODO: use protocol
-			fargs:{data: map_host_editor(node)}});
+			fargs:{data: map_cert_editor(data_original)}});
 		    /*
 		    events.emit("show."+editor_name,{fargs:{data: {
 			tabs_ids: ["body", "kind", "value"],
@@ -206,8 +211,8 @@ function TestMc({db_handler}){
 	    //TODO: data_update: (),
 	    menu:{
 		
-		items: ["join", "mk_folder", "add", "load", "rm"],
-		tooltips: ["join", "mk_folder", "add", "load entry", "remove selected"],
+		items: ["join", "mk_folder", "add", "load", "rm", "rename"],
+		tooltips: ["join", "mk_folder", "add", "load entry", "remove selected", "rename"],
 		
 		// keys here must be equal to ``menu_items``:
 		callbacks: {
@@ -249,6 +254,10 @@ function TestMc({db_handler}){
 		    "rm": ()=>{
 			console.log("removing...");
 			rm(reducer);
+		    },
+		    "rename":()=>{
+			events.emit(host_name+".ActionsQueue",
+				    {fargs: {action: "rename"}});
 		    }
 		}
 	    }}}
@@ -274,14 +283,11 @@ function TestMc({db_handler}){
 		(tab_id, tab_content_text_id, _self)=>
 		    (e)=>{
 			console.log("Editor.save");
-		
-			let msg = map_editor_host(_self.data);
-			msg.protocol = protocol_v0;
+					
+			// trigger editor action
 			events.emit(host_name+".ActionsQueue",
 				    {fargs: {
-					action: "save",
-					input: msg}});
-
+					action: "save"}});
 		    },
 		(tab_id, tab_content_text_id, _self)=>
 		    (e)=>{

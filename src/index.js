@@ -12,6 +12,7 @@ import 'jquery-ui/ui/widgets/dialog';
 import {Tree, sort_children} from './env/tree/ttree.js';
 
 // for testing:
+// import {main} from './tests/test_cert.js';
 // import {main} from './tests/test_hla.js';
 import {main} from './tests/test_mc_srv.js';
 // import {main} from './tests/test_host_server.js';

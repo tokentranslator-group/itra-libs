@@ -32,6 +32,7 @@ export function Querier({host_name, on_selected, on_deselected}){
 
     const name = "Querier";
     const on_show_idd = `show.entries.`+name;
+    const on_update_idd = `update.`+name;
 
     const el = useRef();
 
@@ -50,7 +51,8 @@ export function Querier({host_name, on_selected, on_deselected}){
 
     // show/hide (Entries only) from edp:
     useEffect(()=>{
-	
+
+
 	events.on(host_name+`.ActionsQueue`, ({event_type, args, trace})=>{
 	    
 	    if(args.action=="fetch.exit"){
@@ -65,7 +67,23 @@ export function Querier({host_name, on_selected, on_deselected}){
 	    }
 	};
     }, []);
-    
+
+    useEffect(()=>{
+	// re featch the data when some entry having been changed (by editor)
+	events.on(host_name+`.ActionsQueue`, ({event_type, args, trace})=>{
+	    
+	    if(args.action=="fetch.update"){
+		fetch(query, date);
+	    }
+	},{idd: on_update_idd});
+
+	return ()=>{
+	    if(events.has(host_name+`.ActionsQueue`, {idd:on_update_idd})){
+		events.off(host_name+`.ActionsQueue`, {idd: on_update_idd});
+	    }
+	};
+    }, [query]);
+
     // TODO: onClick, onRightClick, 
     let Entries = entries.map(
 	(elm, idx)=>{
@@ -91,7 +109,6 @@ export function Querier({host_name, on_selected, on_deselected}){
 			input: new_selected.map((elm)=>cert.sign({
 			    idd:"querier selected",
 
-			    // show only forward neighbors:
 			    msg: {node: elm},
 			  
 			    data_type:"Node",
@@ -104,11 +121,20 @@ export function Querier({host_name, on_selected, on_deselected}){
 
 			set_selected(new_selected);
 
+			let msg = cert.sign({
+			    idd:"querier on_selected",
+			    
+			    msg: {node: elm},
+			    
+			    data_type:"Node",
+			    data_form: "Single"
+			});
+
 			// but use parent wrapper only on selected one:
 			if (on_selected!==undefined && sel_idx < 0)
-			    on_selected(elm);
+			    on_selected(msg);
 			if (on_deselected!==undefined && sel_idx >= 0)
-			    on_deselected(elm);
+			    on_deselected(msg);
 			
 		    }
 		});
@@ -123,7 +149,25 @@ export function Querier({host_name, on_selected, on_deselected}){
 		
 	    </div>;
 	});// TODO: fix format
-    
+
+    function fetch(query, date){
+
+	console.log("PROBLEM: query", query);
+	    // remove old:
+	    set_selected([]);
+	    set_entries([]);
+	    
+	console.log("PROBLEM: fetch.enter, events", events);
+	    // send data to the host:
+	    events.emit(host_name+".ActionsQueue", {
+		fargs:{
+		    action: "fetch.enter", input: {
+			query: query,
+			date: date}},
+		on_done: (trace)=>{console.log("PROBLEM: fetch.enter done");}
+	    });
+    }
+
     return(<div ref={el} className={"style_editor_dinamic editor_overflow"}
 	   style={{
 		position:"absolute",
@@ -156,17 +200,7 @@ export function Querier({host_name, on_selected, on_deselected}){
 	       "BoxSizing": "border-box"}}
 	   /><br/>
 
-	   <button onClick={()=>{
-	       // remove old:
-	       set_selected([]);
-	       set_entries([]);
-
-	       // send data to the host:
-	       events.emit(host_name+".ActionsQueue", {fargs:{
-		   action: "fetch.enter", input: {
-		       query: query,
-		       date: date}}});
-	   }}>send</button><br/>
+	   <button onClick={()=>fetch(query, date)}>send</button><br/>
 	   
 	   <p>Query result</p>
 	   <ul style={{

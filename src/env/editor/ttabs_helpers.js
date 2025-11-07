@@ -2,33 +2,51 @@ import {ETabs as EditorFrame} from './ttabs_extended.js';
 import {NamedEditorStorage} from './storage.js';
 import {mk_core_comp_v1} from '../react_wrapper.js';
 import {mk_editor_fsm} from './behavior.js';
+import {cert_v0 as cert} from '../cert.js';
 
 
-export function map_host_editor({id, body, type, tags, date}){
+export function map_cert_editor(data){
+    cert.verify({
+	idd: "ttabs",
+	msg: data,
+	data_form: "Single",
+	data_type: "Node,Branch"
+    });
+    console.log("PROBLEM: map_cert_editor:", data);
+
     let check = (attr)=>(attr!==undefined)?attr:"";
+    
     return {
-	id: id,
+	id: data.node.id,
 	tabs_ids: [
 	    "body", "kind",
-	    // "date"
+	    "id", "date"
 	],
 	tabs_contents: [
-	    check(body), check(type),
-	    //check(date)
+	    check(data.node.body), check(data.node.type),
+	    check(data.node.id), check(data.node.date)
 	],
-	field_tags: tags.split(",")
+	field_tags: data.node.tags.split(",")
     };
 }
 
-export function map_editor_host({id, tabs_ids, tabs_contents, field_tags}){
+export function map_editor_cert({id, tabs_ids, tabs_contents, field_tags}){
     
-    return {
-	body: tabs_contents[0],
-	kind: tabs_contents[1],
-	// date: tabs_contents[2],
-	tags: field_tags.join(","),
-	id: id
-    };
+    return cert.sign({
+	idd:"ttabs",
+	
+	data_type:"Node",
+	data_form: "Single",
+	msg: {
+	    node:{
+		body: tabs_contents[0],
+		kind: tabs_contents[1],
+		// date: tabs_contents[2],
+		tags: field_tags.join(","),
+		id: id
+	    }
+	}
+    });
 }
 
 // FOR v1:

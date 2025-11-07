@@ -1,7 +1,7 @@
 import {events} from 'itra-behavior/src/eHandler.js';
 
 import {mk_node, mk_idle_state} from 'itra-behavior/src/type_classes/fsm/behaviors/helpers.js';
-import {map_host_editor, map_editor_host} from './ttabs_helpers.js';
+import {map_cert_editor, map_editor_cert} from './ttabs_helpers.js';
 
 
 
@@ -102,7 +102,7 @@ function mk_saving_state(host_name, parent_host_name, data_protocol){
 		    fargs:{
 			// TODO: data protocol
 			action: "save.enter",
-			input: map_editor_host(data)}
+			input: map_editor_cert(data)}
 		}));
 		
 	    },
@@ -117,7 +117,7 @@ function mk_saving_state(host_name, parent_host_name, data_protocol){
 		// recived args protocol check: 
 		// verify(sefl.idd, input, protocol);
 		
-		self.editor.load(map_host_editor(input));
+		self.editor.load(map_cert_editor(input));
 	    }
 	},
 	/*

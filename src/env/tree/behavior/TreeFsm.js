@@ -5,6 +5,7 @@ import {IO as IOBase} from './TreeEdp.js';
 // import {mk_host_as_state} from '../../host/host_emulator.js';
 import {apply_tree} from '../ttree_helpers.js';
 
+import {cert_v0 as cert} from '../../cert.js';
 
 
 
@@ -21,6 +22,8 @@ function mk_tree_fsm(host_name, state_name){
 	    "join": {from: "Idle", to: "Joining"},
 	    add: {from: "Idle", to: "Adding"},
 	    rm: {from: "Idle", to: "Removing"},
+	    rename: {from: "Idle", to: "Renaming"},
+	    "rename.tree.exit": {from: "Renaming", to: "Idle"},
 	    "rm.exit": {from: "Removing", to: "Idle"},
 	    update: {from: "Idle", to: "Updating"}
 	    
@@ -251,7 +254,66 @@ function mk_tree_fsm(host_name, state_name){
 		})
 		
 	    },
+		
+	    // Note the usage of mk_node here
+	    // and protocols only scheme (events used only for deselection):
+	    {
+		name: "Renaming",
+		builder: (parent_name)=> mk_node({
+		    host_name: parent_name,
+		    node_name: "Renaming",
+		    
+		    stacks_names: ["ActionsQueue"],
+		    
+		    events: {},
 
+		    protocols: {
+		    	on:(self, input)=>{
+			    
+			    const [x, y] = [0, 0];
+			    // no need any x, y for input - it will be in the middle of the screen
+			    // var x = self.tree.menu.offset[0];
+			    // var y = self.tree.menu.offset[1];
+			    
+			    self.tree.menu.input.create_input(x, y, (new_node_name)=>{
+				let sel_node = self.tree.get_selected_node();
+
+
+				// TODO: input.on_succ(data)
+				events.emit(host_name+".ActionsQueue", ({fargs:{
+				    action: "rename.tree.enter", input: {
+					new_node_name: new_node_name,
+					data: sel_node.data.original,
+					sel_node: sel_node
+				    }}}));
+			    });
+
+			},
+			off:(self, input)=>{
+			    // sel_node.original.edge should be updated 
+			    
+			    let sel_node = input.sel_node;
+			    let data = input.data;
+
+			    cert.verify({
+				idd: "TreeFsm.Renaming",
+				msg: data,
+				data_form: "Single",
+				data_type: "Edge"
+			    });
+			    
+			    sel_node.data.original.edge.label = data.edge.label;
+			    // converting reciving data to the tree format:
+			    // let node = apply_tree(input.data).children;
+			    console.log("PROBLEM::Tree:Renaming add node tree after add.exit, sel_node:", sel_node);
+			    // call frame original method:
+			    // self.tree.add_node(node);	
+			    console.log("PROBLEM::Tree:Renaming sel_node:", self.tree.get_selected_node());
+
+			    sel_node.setTitle(data.edge.label);
+			}
+		    }})
+	    },
 
 	    // Note the usage of mk_node here
 	    // and protocols only scheme (events used only for deselection):

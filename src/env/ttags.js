@@ -48,7 +48,7 @@ Tags.prototype.apply_tags = function(succ){
 		// return(null);
 	    }
 	    else
-		tags = Array.concat([old_tags, ["todo"]]);
+		tags = old_tags.concat(["todo"]);
 	}
 	else
 	    tags = old_tags.map(tag=>tag=="todo"?("done"):(tag));
@@ -56,6 +56,7 @@ Tags.prototype.apply_tags = function(succ){
 	    console.log("mark_done tags:", tags);
 	return(tags.join(self.field_tags_separator));		       
     };
+
     $("#"+self.b_mark_done).on("click", function(event){
 	self.callback_tags(succ, edit_tags_done);
     });
@@ -79,6 +80,8 @@ Tags.prototype.apply_tags = function(succ){
 	self.callback_tags(succ, edit_tags);
     });
     // END FOR
+    
+    self.callback_tags(succ, ()=> self.data["field_tags"].join(self.field_tags_separator));
 };
 
 

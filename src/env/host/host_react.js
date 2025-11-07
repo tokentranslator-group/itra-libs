@@ -6,22 +6,38 @@ import {FsmActionsViewer, FsmCurrentStateViewer} from 'itra-behavior/src/type_cl
 
 import {events} from 'itra-behavior/src/eHandler.js';
 
+import $ from 'jquery';
+import * as ui from 'jquery-ui';
+
+// import 'jquery-ui/ui/widgets/tabs';
+//import 'jquery-ui/ui/widgets/dialog';
+import 'jquery-ui/ui/widgets/resizable';
+import 'jquery-ui/ui/widgets/draggable';
 
 function HostComponent({host_fsm}){
     const ref = useRef(host_fsm);
+    const el = useRef();
 
     useEffect(()=>{
 	host_fsm.on();
 	return ()=>host_fsm.off();
     }, []);
 
+    useEffect(()=>{
+	console.log("Querier: making resizable", el.current);
+	if(el.current!==undefined){
+	    $(el.current).draggable();
+	    $(el.current).resizable();
+	}
+    }, []);
+
     // ISSUE: the FsmCurrentStateViewer will not going to work here since 
     // host_fsm is not actually fsm but state!
-    return(<div className={"style_editor_dinamic editor_overflow"}
+    return(<div ref={el} className={"style_editor_dinamic editor_overflow"}
 	   style={{
 		position:"absolute",
 		// "zIndex": 1,
-		top: "170%", left:"30%", width: "70%",
+		top: "30%", right:"10%", width: "40%",
 		border: "1px solid",
 		"border-color": "black"
 		

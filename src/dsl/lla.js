@@ -8,21 +8,28 @@ export function rm(host_reducer, ids, on_succ){
      });
 }
 
-export function save(host_reducer, data, on_succ){
+export function save(host_reducer, data, on_succ, type){
     /*Save note or edge.
 
      - ``data`` -- has to contain id and table_type ("note" or "edge")!
      save(reducer, {id:notes_ids[0], table_type: "note"}, console.log)
+
+     - ``type`` -- note (default) or edge
      */
     if(!data.hasOwnProperty("id"))
-	throw new Error("save.hla: data has to contain id!");
+	throw new Error("save.lla: data has to contain id!");
 
-     host_reducer.call("update_note", data, (data)=>{
+    let action_name = (type!==undefined && type=="edge")?"update_edge":"update_note";
+     host_reducer.call(action_name, data, (data)=>{
 	 on_succ(true);
      });
 }
 
 export function ls_note(host_reducer, _id, on_succ){
+
+    /*Return list of branches (=[(Edge, Node)] following
+     from a node with given id)*/
+
      host_reducer.call("ls", {id: _id}, (data)=>{
 	 // console.log("PROBLEM: ls_note:data", data);
 	 let children_branches = data["[[Obj], [Obj]]"][1];
@@ -45,10 +52,16 @@ export function ls_note(host_reducer, _id, on_succ){
 
 // TODO: map to notes
 export function get(host_reducer, _id, on_succ, table_type){
+    /*
+     Will return note entry:
+     {"type": "mynotes", "value": "Hello", "id": "1", "kind": "None", "body": "None", "tags": "Hello tag"}
+
+     Result not being signed!*/
+
     table_type = (table_type==undefined)?"note":table_type;
     // get note from server by id:
     host_reducer.call("get", {id: _id, "table_type": table_type},
-		      (data)=>on_succ({...data, protocol: host_reducer.data_protocol}));
+		      (data)=>on_succ(data));
 }
 
 

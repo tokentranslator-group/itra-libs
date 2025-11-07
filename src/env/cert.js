@@ -46,7 +46,8 @@ class Certificate{
 	 entries attribute inside.
 	 
 	 - ``data_type`` -- the type of data which should be used in msg
-	 (like Branch, Node or Edge). Optional
+	 (like Branch, Node or Edge). Optional. Could contain several at once:
+	 "Branch,Node" or "Branch,Edge", separated by semicolumn. 
 
 	 # Example:
 	 cert.verify({
@@ -77,17 +78,48 @@ class Certificate{
 	    console.log("VerificationError msg:", msg);
 	} 
 
-
-	if(data_type!==undefined && msg.protocol.data_type!==data_type){
-	    console.log("VerificationError msg:", msg);
-	    console.log("VerificationError data_type:", data_type);
-	    throw new Error(idd+" "+"protocol data_type verification failure! in ");
+	
+	//if(data_type!==undefined && msg.protocol.data_type!==data_type){
+	if(data_type!==undefined){
+	    let data_type_correct = this._type_tester(data_type, msg.protocol.data_type);
+	    if(!data_type_correct){
+		console.log("VerificationError msg:", msg);
+		console.log("VerificationError data_type:", data_type);
+		throw new Error(idd+" "+"protocol data_type verification failure! in ");
+		}
 	}
 	if(data_form=="Multi" && !msg.hasOwnProperty("entries")){
 	    console.log("VerificationError msg:", msg);
 	    console.log("VerificationError data_form:", data_form);
 	    throw new Error(idd+" "+"protocol data_form verification failure! no entries given in the msg");	    
 	}
+	
+	
+	if(data_form=="Single" && msg.protocol.data_type=="Node" && !msg.hasOwnProperty("node")){
+	//if(data_type!==undefined){
+	//    let has_node = this._type_tester(msg.protocol.data_type, "Node") || this._type_tester(msg.protocol.data_type, "Branch"); 
+
+	    //  if(data_form=="Single" && has_node && !msg.hasOwnProperty("node")){
+		console.log("VerificationError msg:", msg);
+		console.log("VerificationError data_form:", data_form);
+		throw new Error(idd+" "+"protocol data_form verification failure! no node given in the msg");	    
+	    }
+	    
+	    //let has_edge = this._type_tester(data_type, "Edge") || this._type_tester(data_type, "Branch");  
+	if(data_form=="Single" && msg.protocol.data_type=="Edge" && !msg.hasOwnProperty("edge")){
+	    
+	//    if(data_form=="Single" && has_edge && !msg.hasOwnProperty("edge")){	    
+		console.log("VerificationError msg:", msg);
+		console.log("VerificationError data_form:", data_form);
+		throw new Error(idd+" "+"protocol data_form verification failure! no edge given in the msg");	    
+	    }
+	//}
+	if(data_form=="Single" && msg.protocol.data_type=="Branch" && (!msg.hasOwnProperty("edge")||!msg.hasOwnProperty("node"))){
+	    console.log("VerificationError msg:", msg);
+	    console.log("VerificationError data_form:", data_form);
+	    throw new Error(idd+" "+"protocol data_form verification failure! no edge or node given in the msg");	    
+	}
+	
 	return true;
     }
 
@@ -156,6 +188,21 @@ class Certificate{
 	return {...msg};
     }
 
+    _type_tester(data_type, type_value){
+	// data_type - is a user query
+	// type_value - is what the data actual have
+
+	// to check if there is the `type_value` inside `data_type`.
+	// The latter could looks like "Edge" or "Edge,Branch".
+	// If type_value is Branch, the data_type = "Edge,Node" will
+	// also return true
+	let res = data_type.split(",").findIndex(_type=>_type==type_value)>=0;
+
+	if(type_value=="Branch" && !res)
+	    return this._type_tester(data_type, "Node") && this._type_tester(data_type, "Edge"); 
+	return res;
+    }
+    
     _check_data(idd, data_type, data_form){
 	// checking data_type:
 	if(["Branch", "Node", "Edge"].indexOf(data_type)<0){

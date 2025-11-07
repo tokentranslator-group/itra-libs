@@ -51,7 +51,7 @@ function main(){
 	data: {
 	    tabs_ids: ["parser", "out"],
 	    tabs_contents: ["2+2", "4"],
-	    field_tags: ["math"]}});
+	    field_tags: ["math", "phys"]}});
 }
 
 
