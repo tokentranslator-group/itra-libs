@@ -1,10 +1,10 @@
 # itra-libs
 
-&nbsp; Several usefull components wrapped with React. 
-Supports of views/react separated event driven behavior through common stacks in decentrilized manner.
+&nbsp; Several useful components wrapped with React. 
+Supports of views/react separated event driven behavior through common stacks in decentralized manner.
  To simplify control the latter make use of internal data protocol. 
 
-More detailed doc will be available soon on [tra-doc page]()
+More detailed doc will be available soon on [tra-doc page](https://tra-doc.readthedocs.io/en/latest/components/itra/itra-libs/)
 
  
 # Compositions:
